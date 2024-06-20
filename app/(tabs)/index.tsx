@@ -1,31 +1,19 @@
-import { StyleSheet } from 'react-native';
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import TabOneScreen from './TabOneScreen';
+import TabTwoScreen from './two';
+import CameraScreen from '../../components/CameraScreen';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const BottomTab = createBottomTabNavigator();
 
-export default function TabOneScreen() {
+function BottomTabNavigator() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <BottomTab.Navigator>
+      <BottomTab.Screen name="TabOne" component={TabOneScreen} />
+      <BottomTab.Screen name="TabTwo" component={TabTwoScreen} />
+      <BottomTab.Screen name="Camera" component={CameraScreen} />
+    </BottomTab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
+export default BottomTabNavigator;
