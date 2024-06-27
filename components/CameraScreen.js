@@ -6,12 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Button } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
+import bannedIngredients from '../app/bannedIngredients.json';
 
 const CameraScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [productData, setProductData] = useState(null);
   const [additives, setAdditives] = useState([]);
+  const [flaggedIngredients, setFlaggedIngredients] = useState([]);
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -51,6 +53,24 @@ const CameraScreen = () => {
           })
         );
         setAdditives(additiveDetails);
+      }
+
+      // Flag banned ingredients
+      if (data.product && data.product.ingredients_text) {
+        const ingredientsArray = data.product.ingredients_text.split(',').map(ingredient => ingredient.trim().toLowerCase());
+        const flaggedIngredients = ingredientsArray.map(ingredient => {
+          const bannedIngredient = bannedIngredients.bannedIngredients.find(banned => ingredient.includes(banned.name.toLowerCase()));
+          if (bannedIngredient) {
+            return {
+              name: bannedIngredient.name,
+              reason: bannedIngredient.reason,
+              severity: bannedIngredient.severity,
+            };
+          }
+          return null;
+        }).filter(flagged => flagged !== null);
+        
+        setFlaggedIngredients(flaggedIngredients);
       }
     } catch (error) {
       console.error('Error fetching product data:', error);
@@ -112,6 +132,21 @@ const CameraScreen = () => {
           ) : (
             <Text>No additives found.</Text>
           )}
+          <Text style={styles.headerText}>Flagged Ingredients:</Text>
+          {flaggedIngredients.length > 0 ? (
+            flaggedIngredients.map((ingredient, index) => (
+              <View key={index} style={[
+                styles.ingredientContainer, 
+                ingredient.severity === 'red' ? styles.redFlag : ingredient.severity === 'yellow' ? styles.yellowFlag : styles.greenFlag
+              ]}>
+                <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                <Text>Reason: {ingredient.reason}</Text>
+                <Text>Severity: {ingredient.severity}</Text>
+              </View>
+            ))
+          ) : (
+            <Text>No flagged ingredients found.</Text>
+          )}
         </View>
       ) : (
         <Text>Loading product data...</Text>
@@ -146,9 +181,28 @@ const styles = StyleSheet.create({
   additiveName: {
     fontWeight: 'bold',
   },
+  ingredientContainer: {
+    marginTop: 10,
+    padding: 5,
+    borderRadius: 5,
+  },
+  ingredientName: {
+    fontWeight: 'bold',
+  },
+  redFlag: {
+    backgroundColor: '#ffcccc',
+  },
+  yellowFlag: {
+    backgroundColor: '#ffffcc',
+  },
+  greenFlag: {
+    backgroundColor: '#ccffcc',
+  },
 });
 
 export default CameraScreen;
+
+
 
 
 // import React, { useState, useEffect } from 'react';
