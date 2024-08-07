@@ -11,4 +11,6 @@ declare module 'react-native' {
     className?: string;
   }
   // Add other components as needed
+  // Define a type for the TabIcon props
+
 }
