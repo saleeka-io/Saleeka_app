@@ -2,7 +2,14 @@
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./<custom-folder>/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+
+      colors: {
+        primary: '#2F5651'
+
+      }
+
+    },
   },
   plugins: [],
 }
