@@ -6,66 +6,62 @@ import { images } from '../../constants';
 import { Dimensions } from 'react-native';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/button';
-
+import { app, auth } from '../../firebase/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { router } from 'expo-router';
 const { height, width } = Dimensions.get('window');
 
-const Login = () => {
+const SignUp = () => {
     const [form, setForm] = useState({
         username: '',
-        password: ''
+        password: '',
+        email: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleUsernameChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, username: text }));
-    };
+    const handleUsernameChange = (text: string) => setForm(prevForm => ({ ...prevForm, username: text }));
+    const handlePasswordChange = (text: string) => setForm(prevForm => ({ ...prevForm, password: text }));
+    const handleEmailChange = (text: string) => setForm(prevForm => ({ ...prevForm, email: text }));
 
-    const handlePasswordChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, password: text }));
+    const createUser = async () => {
+        setIsSubmitting(true);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+            const user = userCredential.user;
+            await updateProfile(user, { displayName: form.username });
+            console.log('User created and updated:', user);
+            // Handle post-signup logic here, like navigating to another screen
+            router.replace('/login');
+        } catch (error) {
+            if (typeof error === "object" && error !== null && "message" in error) {
+                console.error('Error signing up:', error.message);
+            } else {
+                console.error('An unexpected error occurred:', error);
+            }
+        }
+        setIsSubmitting(false);
     };
 
     return (
         <View style={styles.container}>
             <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-            <ImageBackground
-                source={images.bgImage}
-                style={styles.backgroundImage}
-                resizeMode="cover"
-            >
+            <ImageBackground source={images.bgImage} style={styles.backgroundImage} resizeMode="cover">
                 <SafeAreaView style={styles.imageAreaContent}>
-                    <Image
-                        style={styles.logo}
-                        source={images.logo}
-                    />
+                    <Image style={styles.logo} source={images.logo} />
                 </SafeAreaView>
             </ImageBackground>
             <View style={styles.textSection}>
                 <ScrollView contentContainerStyle={styles.contentContainer}>
-                    <Text style={styles.loginTitle}>Login</Text>
-                    <Text style={styles.loginSubtitle}>Sign in to your account</Text>
-                    <FormField
-                        title="Username"
-                        placeholder='Username'
-                        value={form.username}
-                        handleChangeText={handleUsernameChange}
-                        keyboardType="default"
-                    />
-                    <FormField
-                        title="Password"
-                        value={form.password}
-                        handleChangeText={handlePasswordChange}
-                        keyboardType="default" 
-                        placeholder='Password'
-                    />
-                    <CustomButton
-                        title="Log In"
-                        handlePress={() => {}}
-                        isLoading={isSubmitting}
-                    />
-                    <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                    <Text style={styles.loginTitle}>Sign Up</Text>
+                    <Text style={styles.loginSubtitle}>Create your account</Text>
+                    <FormField title="Username" placeholder='Username' value={form.username} handleChangeText={handleUsernameChange} keyboardType="default" />
+                    <FormField title="Email" placeholder='Email' value={form.email} handleChangeText={handleEmailChange} keyboardType="email-address" />
+                    <FormField title="Password" value={form.password} handleChangeText={handlePasswordChange} keyboardType="default" placeholder='Password' />
+                    <CustomButton title="Sign Up" handlePress={createUser} isLoading={isSubmitting} />
+                    <Text style={styles.forgotPassword}></Text>
                     <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Don't have an account? </Text>
-                        <Link href="/SignUp" style={styles.signupLink}>Sign Up</Link>
+                        <Text style={styles.signupText}>Have an account already? </Text>
+                        <Link href="/login" style={styles.signupLink}>Login</Link>
                     </View>
                 </ScrollView>
             </View>
@@ -114,6 +110,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         marginBottom: 30,
+
     },
     forgotPassword: {
         color: '#FFF',
@@ -130,9 +127,9 @@ const styles = StyleSheet.create({
     },
     signupLink: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 18,
         textDecorationLine: 'underline',
     }
 });
 
-export default Login;
+export default SignUp;
