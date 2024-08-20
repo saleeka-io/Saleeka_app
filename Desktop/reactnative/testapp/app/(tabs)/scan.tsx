@@ -1,118 +1,118 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Button } from 'react-native';
-import { CameraView, Camera } from 'expo-camera';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
 
-// Define the structure for the barcode scanning event
-interface BarCodeScanEvent {
-  type: string;
-  data: string;
+// Interface definition for product data
+interface ProductData {
+  product_name: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  image_url: string | null;
 }
 
-const CameraScreen = () => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+const BarcodeScanner = () => {
+  const [hasPermission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
-  const [productData, setProductData] = useState<any | null>(null);
-  const [additives, setAdditives] = useState<Array<any>>([]);
+  const router = useRouter();
+  const cameraRef = useRef(null);
 
   useEffect(() => {
-    const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    };
+    if (!hasPermission) {
+      requestPermission();
+    }
+  }, [hasPermission]);
 
-    getCameraPermissions();
-    fetchProductData('0737628064502');
-  }, []);
-
-  const handleBarCodeScanned = ({ type, data }: BarCodeScanEvent) => {
+  const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     setScanned(true);
-    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
-    fetchProductData(data);
-  };
+    const { data } = scanningResult;
+    const productData = await fetchProductData(data);
 
-  const fetchProductData = async (barcode: string) => {
-    try {
-      const response = await fetch(`https://world.openfoodfacts.net/api/v3/product/${barcode}.json?fields=product_name,ingredients_text,additives_tags`);
-      const data = await response.json();
-      setProductData(data.product);
-
-      if (data.product && data.product.additives_tags.length > 0) {
-        const additiveDetails = await Promise.all(
-          data.product.additives_tags.map(async (additive: string) => {
-            const additiveCode = additive.replace('en:', '');
-            const additiveResponse = await fetch(`https://world.openfoodfacts.org/additive/${additiveCode}.json`);
-            const additiveData = await additiveResponse.json();
-            return {
-              code: additiveCode,
-              name: additiveData?.additive?.name || `Unknown Additive (${additiveCode})`,
-              description: additiveData?.additive?.description || 'No description available',
-            };
-          })
-        );
-        setAdditives(additiveDetails);
-      }
-    } catch (error) {
-      console.error('Error fetching product data:', error);
+    if (productData) {
+      const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+      router.push(`/ResultScreen?productData=${encodedProductData}`);
+    } else {
       Alert.alert('Error', 'Failed to fetch product data');
     }
   };
 
-  if (hasPermission === null) {
+  const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
+    try {
+      const response = await fetch(`https://world.openfoodfacts.net/api/v3/product/${barcode}.json?fields=product_name,nutriments,image_url`);
+      const data = await response.json();
+
+      return {
+        product_name: data.product?.product_name,
+        calories: data.product?.nutriments?.energy_kcal || null,
+        protein: data.product?.nutriments?.proteins || null,
+        carbs: data.product?.nutriments?.carbohydrates || null,
+        fat: data.product?.nutriments?.fat || null,
+        image_url: data.product?.image_url || null,
+      };
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    // Directly simulate barcode scanning with a hardcoded barcode
+    fetchProductData('0737628064502').then((productData) => {
+      if (productData) {
+        const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+        router.push(`/ResultScreen?productData=${encodedProductData}`);
+      } else {
+        Alert.alert('Error', 'Failed to fetch product data');
+      }
+    });
+  }, []);
+
+  if (!hasPermission) {
     return <Text>Requesting for camera permission...</Text>;
   }
-  if (hasPermission === false) {
-    return <Text>No access to camera</Text>;
+
+  if (!hasPermission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>We need your permission to show the camera</Text>
+        <TouchableOpacity onPress={requestPermission} style={styles.button}>
+          <Text style={styles.text}>Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
-      {/* Uncomment below to enable barcode scanning */}
-      {/* <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setScanned(false)}>
-        <Camera
-          style={StyleSheet.absoluteFillObject}
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          barCodeScannerSettings={{
-            barCodeTypes: [
-              'qr',
-              'ean13',
-              'ean8',
-              'upc_a',
-              'upc_e',
-              'code39',
-              'code128',
-              'codabar',
-              'interleaved2of5',
-              'pdf417',
-              'aztec',
-              'dataMatrix'
-            ],
-          }}
-        />
-      </TouchableOpacity>
-      {scanned && (
-        <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />
-      )} */}
-      {productData ? (
-        <View style={styles.productDataContainer}>
-          <Text style={styles.headerText}>Product Name:</Text>
-          <Text>{productData.product_name}</Text>
-          <Text style={styles.headerText}>Ingredients:</Text>
-          <Text>{productData.ingredients_text}</Text>
-          <Text style={styles.headerText}>Additives:</Text>
-          {additives.length > 0 ? (
-            additives.map((additive, index) => (
-              <View key={index} style={styles.additiveContainer}>
-                <Text style={styles.additiveName}>{additive.name}</Text>
-                <Text>{additive.description}</Text>
-              </View>
-            ))
-          ) : (
-            <Text>No additives found.</Text>
-          )}
-        </View>
-      ) : (
-        <Text>Loading product data...</Text>
-      )}
+      <CameraView
+        ref={cameraRef}
+        style={styles.camera}
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: [
+            'qr',
+            'ean13',
+            'ean8',
+            'upc_a',
+            'upc_e',
+            'code39',
+            'code128',
+            'codabar',
+            'interleaved2of5',
+            'pdf417',
+            'aztec',
+            'dataMatrix',
+          ],
+        }}
+      >
+        {scanned && (
+          <TouchableOpacity style={styles.buttonOverlay} onPress={() => setScanned(false)}>
+            <Text style={styles.scanAgainText}>Tap to Scan Again</Text>
+          </TouchableOpacity>
+        )}
+      </CameraView>
     </View>
   );
 };
@@ -120,29 +120,42 @@ const CameraScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
     justifyContent: 'center',
     padding: 20,
   },
-  productDataContainer: {
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    marginTop: 10,
+  message: {
+    textAlign: 'center',
+    paddingBottom: 10,
   },
-  headerText: {
+  camera: {
+    flex: 1,
+  },
+  buttonOverlay: {
+    flex: 1,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  scanAgainText: {
+    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 10,
+    textAlign: 'center',
   },
-  additiveContainer: {
-    marginTop: 10,
-    padding: 5,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 5,
+  button: {
+    flex: 1,
+    alignSelf: 'flex-end',
+    alignItems: 'center',
   },
-  additiveName: {
+  text: {
+    fontSize: 24,
     fontWeight: 'bold',
+    color: 'white',
   },
 });
 
-export default CameraScreen;
+export default BarcodeScanner;
