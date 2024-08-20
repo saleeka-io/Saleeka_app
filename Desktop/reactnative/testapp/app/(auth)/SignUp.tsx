@@ -9,7 +9,10 @@ import CustomButton from '../../components/button';
 import { app, auth } from '../../firebase/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { router } from 'expo-router';
+import CustomText from '@/components/CustomText';
+
 const { height, width } = Dimensions.get('window');
+
 
 const SignUp = () => {
     const [form, setForm] = useState({
@@ -52,15 +55,15 @@ const SignUp = () => {
             </ImageBackground>
             <View style={styles.textSection}>
                 <ScrollView contentContainerStyle={styles.contentContainer}>
-                    <Text style={styles.loginTitle}>Sign Up</Text>
-                    <Text style={styles.loginSubtitle}>Create your account</Text>
+                    <CustomText style={styles.loginTitle} fontWeight='semiBold'>Sign Up</CustomText>
+                    <CustomText style={styles.loginSubtitle}>Create your account</CustomText>
                     <FormField title="Username" placeholder='Username' value={form.username} handleChangeText={handleUsernameChange} keyboardType="default" />
                     <FormField title="Email" placeholder='Email' value={form.email} handleChangeText={handleEmailChange} keyboardType="email-address" />
                     <FormField title="Password" value={form.password} handleChangeText={handlePasswordChange} keyboardType="default" placeholder='Password' />
                     <CustomButton title="Sign Up" handlePress={createUser} isLoading={isSubmitting} />
-                    <Text style={styles.forgotPassword}></Text>
+                    <CustomText style={styles.forgotPassword}></CustomText>
                     <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Have an account already? </Text>
+                        <CustomText style={styles.signupText}>Have an account already? </CustomText>
                         <Link href="/login" style={styles.signupLink}>Login</Link>
                     </View>
                 </ScrollView>
@@ -101,9 +104,8 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
     },
     loginTitle: {
-        color: '#FFF',
+        color: '#fff',
         fontSize: 24,
-        fontWeight: 'bold',
     },
     loginSubtitle: {
         color: '#FFF',
@@ -111,10 +113,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 30,
 
+
     },
     forgotPassword: {
         color: '#FFF',
         fontSize: 16,
+        fontWeight: 'regular',
+
     },
     signupContainer: {
         flexDirection: 'row',

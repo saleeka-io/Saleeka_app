@@ -4,6 +4,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { images } from '../constants';
+import CustomText from '@/components/CustomText';
+
 const { height, width } = Dimensions.get('window');
 const curveStartY = height * 0.42; // Example adjustment for starting Y position of the curves
 const lowerCurveStartY = curveStartY + 60; // Slightly lower start for the second curve
@@ -40,19 +42,19 @@ const App = () => {
               />
             </Svg>
             <View style={[styles.textContainer, { top: height * 0.5 }]}>
-              <Text style={[styles.welcomeText, { fontSize: height * 0.04 }]}>Welcome</Text>
-              <Text style={[styles.introText, { fontSize: height * 0.025 }]}>
+              <CustomText style={[styles.welcomeText, { fontSize: height * 0.04 }]}>Welcome</CustomText>
+              <CustomText style={[styles.introText, { fontSize: height * 0.025 }]}>
                 Your Guide To A Healthier Lifestyle, Way To A Better Living
-              </Text>
+              </CustomText>
               <TouchableOpacity onPress={() => console.log('Sign Up Pressed')} style={styles.signUpButton}>
                 <Link href="/login" style={styles.linkText}>
-                  <Text style={[styles.signUpText, { fontSize: height * 0.03 }]}>Sign Up Here</Text>
+                  <CustomText style={[styles.signUpText, { fontSize: height * 0.03 }]}>Sign Up Here</CustomText>
                 </Link>
               </TouchableOpacity>
               <Text style={[styles.loginPrompt, { fontSize: height * 0.02 }]}>
                 Already have an account?{' '}
                 <Link href="/login" style={styles.linkText}>
-                  <Text style={styles.loginLink}>Login</Text>
+                  <CustomText style={styles.loginLink}>Login</CustomText>
                 </Link>
               </Text>
             </View>

@@ -6,23 +6,51 @@ import { images } from '../../constants';
 import { Dimensions } from 'react-native';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/button';
+import CustomText from '@/components/CustomText';
+import { app, auth } from '../../firebase/firebase';
+import {signInWithEmailAndPassword} from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { router } from 'expo-router';
+
 
 const { height, width } = Dimensions.get('window');
 
 const Login = () => {
     const [form, setForm] = useState({
-        username: '',
+        email: '',
         password: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const handleUsernameChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, username: text }));
+        setForm(prevForm => ({ ...prevForm, email: text }));
     };
 
     const handlePasswordChange = (text: string) => {
         setForm(prevForm => ({ ...prevForm, password: text }));
     };
+    const handleLogin = async () => {
+        setIsSubmitting(true);
+        try {
+            const response = await signInWithEmailAndPassword(auth, form.email, form.password);
+            console.log('Logged in!', response);
+            // Navigate to your home screen here
+            router.replace('/scan');
+        } catch (err) {
+            console.error(err);
+            if (err instanceof FirebaseError) {
+                // Handle Firebase errors
+                setError(err.message);
+            } else {
+                // Handle generic errors differently or convert them to a string if needed
+                setError('An unexpected error occurred.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
 
     return (
         <View style={styles.container}>
@@ -41,12 +69,12 @@ const Login = () => {
             </ImageBackground>
             <View style={styles.textSection}>
                 <ScrollView contentContainerStyle={styles.contentContainer}>
-                    <Text style={styles.loginTitle}>Login</Text>
-                    <Text style={styles.loginSubtitle}>Sign in to your account</Text>
+                    <CustomText style={styles.loginTitle} fontWeight='semiBold'>Login</CustomText>
+                    <CustomText style={styles.loginSubtitle}>Sign in to your account</CustomText>
                     <FormField
-                        title="Username"
-                        placeholder='Username'
-                        value={form.username}
+                        title="Email"
+                        placeholder='Email'
+                        value={form.email}
                         handleChangeText={handleUsernameChange}
                         keyboardType="default"
                     />
@@ -59,12 +87,12 @@ const Login = () => {
                     />
                     <CustomButton
                         title="Log In"
-                        handlePress={() => {}}
+                        handlePress={handleLogin}
                         isLoading={isSubmitting}
                     />
-                    <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                    <CustomText style={styles.forgotPassword}>Forgot Password?</CustomText>
                     <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Don't have an account? </Text>
+                        <CustomText style={styles.signupText}>Don't have an account? </CustomText>
                         <Link href="/SignUp" style={styles.signupLink}>Sign Up</Link>
                     </View>
                 </ScrollView>
