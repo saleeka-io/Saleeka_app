@@ -10,6 +10,7 @@ import CustomButton from '../../components/button';
 import { app, auth } from '../../firebase/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { router } from 'expo-router';
+import CustomText from '@/components/CustomText';
 
 const { width, height } = Dimensions.get('window');
 
@@ -89,6 +90,7 @@ const SignUp = () => {
 
     // Calculate logo position based on screen height
     const logoTopPosition = height < 700 ? height * 0.05 : height * 0.1;
+    const isSmallScreen = height < 700;
 
     return (
         <View style={styles.container}>
@@ -110,7 +112,7 @@ const SignUp = () => {
                     width={width}
                     viewBox={`0 0 ${width} ${height}`}
                     style={styles.svgContainer}
-                    >
+                >
                     <Path
                         d={`M0,${height * 0.42} Q${width / 2},${height * 0.42 - 80} ${width},${height * 0.42} V${height} H0 Z`}
                         fill="#3A6A64"
@@ -119,48 +121,36 @@ const SignUp = () => {
                         d={`M0,${height * 0.42 + 40} Q${width / 2},${height * 0.42 + 60 - 100} ${width},${height * 0.42 + 45} V${height} H0 Z`}
                         fill="#2F5651"
                     />
-                    </Svg>
+                </Svg>
             </ImageBackground>
-            <ScrollView 
-                style={[styles.scrollView, { marginTop: height * 0.45, zIndex: 1 }]}
-                contentContainerStyle={styles.scrollViewContent}
-            >
-                <Text style={styles.loginTitle}>Sign Up</Text>
-                <Text style={styles.loginSubtitle}>Create your account</Text>
-                <FormField
-                    title="Username"
-                    placeholder='Username'
-                    value={form.username}
-                    handleChangeText={handleUsernameChange}
-                    keyboardType="default"
-                />
-                {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
-                <FormField
-                    title="Email"
-                    placeholder='Email'
-                    value={form.email}
-                    handleChangeText={handleEmailChange}
-                    keyboardType="email-address"
-                />
-                {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-                <FormField
-                    title="Password"
-                    value={form.password}
-                    handleChangeText={handlePasswordChange}
-                    keyboardType="default" 
-                    placeholder='Password'
-                />
-                {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-                <CustomButton
-                    title="Sign Up"
-                    handlePress={createUser}
-                    isLoading={isSubmitting}
-                />
-                <View style={styles.signupContainer}>
-                    <Text style={styles.signupText}>Have an account already? </Text>
-                    <Link href="/login" style={styles.signupLink}>Login</Link>
-                </View>
-            </ScrollView>
+            <View style={styles.textSection}>
+                <ScrollView 
+                    contentContainerStyle={[
+                        styles.contentContainer, 
+                        { marginTop: height * 0.43, paddingBottom: isSmallScreen ? 20 : 40 }
+                    ]}
+                >
+                    <CustomText style={styles.loginTitle} fontWeight='semiBold'>Sign Up</CustomText>
+                    <CustomText style={styles.loginSubtitle}>Create your account</CustomText>
+                    <FormField title="Username" placeholder='Username' value={form.username} handleChangeText={handleUsernameChange} keyboardType="default" />
+                    {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+                    <FormField title="Email" placeholder='Email' value={form.email} handleChangeText={handleEmailChange} keyboardType="email-address" />
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    <FormField title="Password" value={form.password} handleChangeText={handlePasswordChange} keyboardType="default" placeholder='Password' />
+                    {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+                    <CustomButton title="Sign Up" handlePress={createUser} isLoading={isSubmitting} />
+                    <CustomText style={styles.forgotPassword}></CustomText>
+                    <View 
+                        style={[
+                            styles.signupContainer, 
+                            { marginTop: isSmallScreen ? 10 : 20 } // Adjust margin for small screens
+                        ]}
+                    >
+                        <CustomText style={styles.signupText}>Have an account already? </CustomText>
+                        <Link href="/login" style={styles.signupLink}>Login</Link>
+                    </View>
+                </ScrollView>
+            </View>
         </View>
     );
 };
@@ -190,25 +180,23 @@ const styles = EStyleSheet.create({
         height: '100%',
         zIndex: 0,
     },
-    scrollView: {
+    textSection: {
         flex: 1,
+        padding: '20rem',
     },
-    scrollViewContent: {
+    contentContainer: {
         flexGrow: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        paddingHorizontal: '20rem',
     },
     loginTitle: {
         color: '#FFF',
         fontSize: '24rem',
-        fontWeight: 'bold',
         marginBottom: '10rem',
     },
     loginSubtitle: {
         color: '#FFF',
         fontSize: '16rem',
-        textAlign: 'center',
         marginBottom: '15rem',
     },
     forgotPassword: {
@@ -219,16 +207,18 @@ const styles = EStyleSheet.create({
     signupContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: '20rem',
+        marginTop: '10rem',  // Reduced margin top for small screens
     },
     signupText: {
         color: '#FFF',
         fontSize: '16rem',
+        marginTop: -40,
     },
     signupLink: {
         color: '#FFF',
         fontSize: '16rem',
         textDecorationLine: 'underline',
+        marginTop: -40,
     },
     errorText: {
         color: 'red',
