@@ -1,129 +1,134 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StatusBar, StyleSheet, Dimensions, Platform, ImageBackground } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Image, TouchableOpacity, StatusBar, StyleSheet, Dimensions, ImageBackground } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { images } from '../constants';
-const { height, width } = Dimensions.get('window');
-const curveStartY = height * 0.42; // Example adjustment for starting Y position of the curves
-const lowerCurveStartY = curveStartY + 60; // Slightly lower start for the second curve
+import EStyleSheet from 'react-native-extended-stylesheet';
 
+const { width, height } = Dimensions.get('window');
+
+// Set up EStyleSheet
+EStyleSheet.build({ $rem: width / 380 });
 
 const App = () => {
+  // Calculate logo position based on screen height
+  const logoTopPosition = height < 700 ? height * 0.05 : height * 0.1;
+
   return (
-    <SafeAreaProvider>
+    <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <View style={styles.fullScreen}>
-        <ImageBackground
-          source={images.bgImage}
-          style={styles.backgroundImage}
-          resizeMode="cover"
+      <ImageBackground
+        source={images.bgImage}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <Image
+            style={[styles.logo, { top: logoTopPosition }]}
+            source={images.logo}
+            resizeMode="contain"
+          />
+        </SafeAreaView>
+        <Svg
+          height={height}
+          width={width}
+          viewBox={`0 0 ${width} ${height}`}
+          style={styles.svgContainer}
         >
-          <SafeAreaView style={styles.safeAreaContent}>
-            <Image
-              style={styles.logo}
-              source={images.logo}
-            />
-            <Svg
-              height={height} // Ensure it's set to full height
-              width={width} // Ensure it's set to full width
-              viewBox={`0 0 ${width} ${height}`} // Adjust the viewBox
-              style={styles.curvedContainers}
-            >
-              <Path
-                d={`M0,${curveStartY} Q${width / 2},${curveStartY - 80} ${width},${curveStartY} V${height} H0 Z`}
-                fill="#3A6A64"
-              />
-              <Path
-                d={`M0,${lowerCurveStartY} Q${width / 2},${lowerCurveStartY - 80} ${width},${lowerCurveStartY} V${height} H0 Z`}
-                fill="#2F5651"
-              />
-            </Svg>
-            <View style={[styles.textContainer, { top: height * 0.5 }]}>
-              <Text style={[styles.welcomeText, { fontSize: height * 0.04 }]}>Welcome</Text>
-              <Text style={[styles.introText, { fontSize: height * 0.025 }]}>
-                Your Guide To A Healthier Lifestyle, Way To A Better Living
-              </Text>
-              <TouchableOpacity onPress={() => console.log('Sign Up Pressed')} style={styles.signUpButton}>
-                <Link href="/login" style={styles.linkText}>
-                  <Text style={[styles.signUpText, { fontSize: height * 0.03 }]}>Sign Up Here</Text>
-                </Link>
-              </TouchableOpacity>
-              <Text style={[styles.loginPrompt, { fontSize: height * 0.02 }]}>
-                Already have an account?{' '}
-                <Link href="/login" style={styles.linkText}>
-                  <Text style={styles.loginLink}>Login</Text>
-                </Link>
-              </Text>
-            </View>
-          </SafeAreaView>
-        </ImageBackground>
-      </View>
-    </SafeAreaProvider>
+          <Path
+            d={`M0,${height * 0.42} Q${width / 2},${height * 0.42 - 80} ${width},${height * 0.42} V${height} H0 Z`}
+            fill="#3A6A64"
+          />
+          <Path
+            d={`M0,${height * 0.42 + 40} Q${width / 2},${height * 0.42 + 60 - 100} ${width},${height * 0.42 + 45} V${height} H0 Z`}
+            fill="#2F5651"
+          />
+        </Svg>
+        <View style={[styles.textContainer, { top: height * 0.5 }]}>
+          <Text style={styles.welcomeText}>Welcome</Text>
+          <Text style={styles.introText}>
+            Your Guide To A Healthier Lifestyle, Way To A Better Living
+          </Text>
+          <TouchableOpacity style={styles.signUpButton}>
+            <Link href="/login" style={styles.linkText}>
+              <Text style={styles.signUpText}>Sign Up Here</Text>
+            </Link>
+          </TouchableOpacity>
+          <Text style={styles.loginPrompt}>
+            Already have an account?{' '}
+            <Link href="/login" style={styles.linkText}>
+              <Text style={styles.loginLink}>Login</Text>
+            </Link>
+          </Text>
+        </View>
+      </ImageBackground>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  fullScreen: {
+const styles = EStyleSheet.create({
+  container: {
     flex: 1,
-    backgroundColor: 'transparent'
   },
   backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  safeAreaContent: {
+  safeArea: {
     flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   logo: {
     width: width * 0.5,
-    height: height * 0.30,
-    resizeMode: 'contain',
-  },
-  curvedContainers: {
+    height: width * 0.5,
     position: 'absolute',
-    top: 0,
+  },
+  svgContainer: {
+    position: 'absolute',
     width: '100%',
     height: '100%',
+    zIndex: 0,
   },
   textContainer: {
     position: 'absolute',
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: '20rem',
   },
   welcomeText: {
     color: 'white',
+    fontSize: '24rem',
     fontWeight: 'bold',
-    fontFamily: 'Poppins-SemiBold',
+    marginBottom: '10rem',
   },
   introText: {
     color: 'white',
+    fontSize: '16rem',
     textAlign: 'center',
-    marginTop: 8,
+    marginBottom: '15rem',
   },
   signUpButton: {
     backgroundColor: '#f1ede1',
     borderRadius: 18,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    marginTop: 30,
+    paddingHorizontal: '24rem',
+    paddingVertical: '12rem',
+    marginTop: '30rem',
     alignItems: 'center',
     justifyContent: 'center',
   },
   signUpText: {
-    fontWeight: 'medium',
+    fontSize: '16rem',
+    fontWeight: '500',
     color: '#030303',
   },
   loginPrompt: {
     color: 'white',
-    marginTop: 16,
+    fontSize: '16rem',
+    marginTop: '20rem',
   },
   loginLink: {
     textDecorationLine: 'underline',

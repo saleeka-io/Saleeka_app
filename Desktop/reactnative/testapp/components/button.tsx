@@ -48,7 +48,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    width:'80%'
+    width:'80%',
+    marginTop: 5,
   },
   text: {
     color: '#00', 
