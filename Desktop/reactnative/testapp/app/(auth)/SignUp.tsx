@@ -7,12 +7,12 @@ import Svg, { Path } from 'react-native-svg';
 import { images } from '../../constants';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/button';
-import { app, auth } from '../../firebase/firebase';
+//import { app} from '../../firebase/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { router } from 'expo-router';
-import CustomText from '@/components/CustomText';
-
+import  auth from '@react-native-firebase/auth';
 const { width, height } = Dimensions.get('window');
+import CustomText from '@/components/CustomText';
 
 // Set up EStyleSheet
 EStyleSheet.build({ $rem: width / 380 });
@@ -29,6 +29,7 @@ const SignUp = () => {
         email: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('')
 
     const validateUsername = (username: string) => {
         if (!/^[A-Za-z]+$/.test(username)) {
@@ -70,22 +71,52 @@ const SignUp = () => {
         validateEmail(text);
     };
 
+    // const createUser = async () => {
+    //     setIsSubmitting(true);
+    //     try {
+    //         const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+    //         const user = userCredential.user;
+    //         await updateProfile(user, { displayName: form.username });
+    //         console.log('User created and updated:', user);
+    //         // Handle post-signup logic here, like navigating to another screen
+    //         router.replace('/login');
+    //     } catch (error) {
+    //         if (typeof error === "object" && error !== null && "message" in error) {
+    //             console.error('Error signing up:', error.message);
+    //         } else {
+    //             console.error('An unexpected error occurred:', error);
+    //         }
+    //     }
+    //     setIsSubmitting(false);
+    // };
+    
     const createUser = async () => {
         setIsSubmitting(true);
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-            const user = userCredential.user;
-            await updateProfile(user, { displayName: form.username });
-            console.log('User created and updated:', user);
-            router.replace('/login');
+            // Create user with email and password
+            const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
+            
+            // Update user profile with display name
+            if (userCredential.user) {
+                await userCredential.user.updateProfile({
+                    displayName: form.username
+                });
+                console.log('User created and updated:', userCredential.user);
+            }
+    
+            // Handle post-signup logic here, like navigating to another screen
+            router.replace('/login');  // Make sure you adapt this to your navigation solution
         } catch (error) {
-            if (typeof error === "object" && error !== null && "message" in error) {
+            if (error instanceof Error) {
                 console.error('Error signing up:', error.message);
+                setError(error.message);
             } else {
                 console.error('An unexpected error occurred:', error);
+                setError('An unexpected error occurred.');
             }
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     // Calculate logo position based on screen height

@@ -53,7 +53,7 @@ const App = () => {
               Your Guide To A Healthier Lifestyle, Way To A Better Living
             </Text>
             <TouchableOpacity style={styles.signUpButton}>
-              <Link href="/login" style={styles.linkText}>
+              <Link href="/SignUp" style={styles.linkText}>
                 <Text style={styles.signUpText}>Sign Up Here</Text>
               </Link>
             </TouchableOpacity>
