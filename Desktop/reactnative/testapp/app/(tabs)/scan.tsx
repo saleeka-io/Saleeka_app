@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 
-// Interface definition for product data
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -11,12 +10,14 @@ interface ProductData {
   carbs: number | null;
   fat: number | null;
   image_url: string | null;
+  ingredients: string[] | null;
 }
 
 const BarcodeScanner = () => {
   const [hasPermission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const router = useRouter();
+  const navigation = useNavigation();
   const cameraRef = useRef(null);
 
   useEffect(() => {
@@ -25,23 +26,53 @@ const BarcodeScanner = () => {
     }
   }, [hasPermission]);
 
-  const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
-    setScanned(true);
-    const { data } = scanningResult;
-    const productData = await fetchProductData(data);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      setScanned(false); // Reset the scanned state when returning to this screen
+    });
 
-    if (productData) {
-      const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-      router.push(`/ResultScreen?productData=${encodedProductData}`);
-    } else {
-      Alert.alert('Error', 'Failed to fetch product data');
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
+    if (!scanned) {
+      setScanned(true); // Disable further scanning
+      const { data } = scanningResult;
+      const productData = await fetchProductData(data);
+
+      if (productData) {
+        const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+        router.push(`/ResultScreen?productData=${encodedProductData}`);
+      } else {
+        Alert.alert('Error', 'Failed to fetch product data');
+      }
     }
   };
 
+
+  useEffect(() => {
+    // Directly simulate barcode scanning with a hardcoded barcode
+    fetchProductData('0737628064502').then((productData) => {
+        if (productData) {
+            console.log("Ingredients:", productData.ingredients); // Log ingredients to check
+            const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+            router.push(`/ResultScreen?productData=${encodedProductData}`);
+        } else {
+            Alert.alert('Error', 'Failed to fetch product data');
+        }
+    });
+}, []);
+
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {
-      const response = await fetch(`https://world.openfoodfacts.net/api/v3/product/${barcode}.json?fields=product_name,nutriments,image_url`);
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text`);
       const data = await response.json();
+
+      if (!data.product?.ingredients_text) {
+        console.warn('Ingredients not found for this product.');
+        Alert.alert('No Ingredients Data', 'The ingredients for this product are not available.');
+        return null;
+      }
 
       return {
         product_name: data.product?.product_name,
@@ -50,24 +81,13 @@ const BarcodeScanner = () => {
         carbs: data.product?.nutriments?.carbohydrates || null,
         fat: data.product?.nutriments?.fat || null,
         image_url: data.product?.image_url || null,
+        ingredients: data.product.ingredients_text.split(', ') || null, // Split ingredients into an array
       };
     } catch (error) {
       console.error('Error fetching product data:', error);
       return null;
     }
   };
-
-  useEffect(() => {
-    // Directly simulate barcode scanning with a hardcoded barcode
-    fetchProductData('0737628064502').then((productData) => {
-      if (productData) {
-        const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-        router.push(`/ResultScreen?productData=${encodedProductData}`);
-      } else {
-        Alert.alert('Error', 'Failed to fetch product data');
-      }
-    });
-  }, []);
 
   if (!hasPermission) {
     return <Text>Requesting for camera permission...</Text>;
