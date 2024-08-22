@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+import { Stack, useRouter } from 'expo-router'; // Ensure useRouter is imported
 import { ActivityIndicator, View } from 'react-native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-import 'react-native-reanimated';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
+  const router = useRouter(); // Initialize the router
 
   const [fontsLoaded] = useFonts({
     "Poppins-Black": require("../assets/fonts/Poppins-Black.ttf"),
@@ -29,9 +26,9 @@ export default function Layout() {
   });
 
   const [authChecking, setAuthChecking] = useState(true);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null); // Correct type
-
-  const [layoutReady, setLayoutReady] = useState(false); // New state to track when layout is ready
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const [navigationTriggered, setNavigationTriggered] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -42,30 +39,33 @@ export default function Layout() {
   // Firebase Authentication Check
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((user) => {
-      setUser(user); // Set user state based on authentication
-      setAuthChecking(false); // Auth check is complete
+      setUser(user);
+      setAuthChecking(false);
     });
 
-    // Clean up the subscription when the component unmounts
     return () => unsubscribe();
   }, []);
 
   // Track when layout is ready
   useEffect(() => {
     if (!authChecking && fontsLoaded) {
-      setLayoutReady(true); // Set layout as ready only after both auth and fonts are done
+      setLayoutReady(true);
     }
   }, [authChecking, fontsLoaded]);
 
-  // Ensure navigation only happens after layout is mounted and ready
+  // Ensure navigation only happens once
   useEffect(() => {
-    if (layoutReady && user === null) {
-      router.push('/login'); // Correct path format based on project structure
+    if (layoutReady && !navigationTriggered) {
+      if (user !== null) {
+        router.replace('/scan'); // Adjust to your camera screen route
+      } else {
+        router.replace('/login'); // Adjust to your login screen route
+      }
+      setNavigationTriggered(true); // Mark navigation as triggered
     }
-  }, [layoutReady, user, router]);
+  }, [layoutReady, user, router, navigationTriggered]);
 
   if (!layoutReady) {
-    // While fonts and authentication status are loading, show a spinner
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -76,15 +76,10 @@ export default function Layout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {/* Authenticated user stack */}
-        {user ? (
-          <>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </>
-        ) : null}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
   );

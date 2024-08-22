@@ -1,12 +1,38 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import { useRouter } from 'expo-router';
 
-const profile = () => {
+const Profile = () => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await auth().signOut();
+      router.replace('/login'); // Redirect to login after logout
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
-    <View>
-      <Text>profile</Text>
+    <View style={styles.container}>
+      <Text style={styles.text}>Profile</Text>
+      <Button title="Logout" onPress={handleLogout} />
     </View>
-  )
-}
+  );
+};
 
-export default profile
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
+});
+
+export default Profile;
