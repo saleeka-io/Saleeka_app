@@ -13,10 +13,10 @@ import { router } from 'expo-router';
 import  auth from '@react-native-firebase/auth';
 const { width, height } = Dimensions.get('window');
 import CustomText from '@/components/CustomText';
-
+import firestore from '@react-native-firebase/firestore';
 // Set up EStyleSheet
 EStyleSheet.build({ $rem: width / 380 });
-
+const db = firestore();
 const SignUp = () => {
     const [form, setForm] = useState({
         username: '',
@@ -89,7 +89,6 @@ const SignUp = () => {
     //     }
     //     setIsSubmitting(false);
     // };
-    
     const createUser = async () => {
         setIsSubmitting(true);
         try {
@@ -102,6 +101,14 @@ const SignUp = () => {
                     displayName: form.username
                 });
                 console.log('User created and updated:', userCredential.user);
+    
+                // Add user to Firestore
+                const userRef = db.collection('Users').doc(userCredential.user.uid);
+                await userRef.set({
+                    username: form.username,
+                    email: form.email
+                });
+                console.log('User added to Firestore:', userCredential.user.uid);
             }
     
             // Handle post-signup logic here, like navigating to another screen
