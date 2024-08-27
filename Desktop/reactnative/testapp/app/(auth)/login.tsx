@@ -66,7 +66,11 @@ const Login = () => {
             console.log('Logged in!', userCredential);
             // Navigate to your home screen here
             // Assuming you are using something like React Navigation
-            router.replace('/scan');  // Adjust based on your navigation setup
+            // router.replace('/scan');  // Adjust based on your navigation setup
+            while (router.canGoBack()) { // Pop from stack until one element is left
+                router.back();
+              }
+              router.replace('/scan'); // Replace the last remaining stack element
         } catch (err) {
             console.error(err);
             if (isFirebaseError(err)) {

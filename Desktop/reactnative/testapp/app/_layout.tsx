@@ -42,6 +42,8 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
+        <Stack.Screen name="ProductNotFound" options={{ headerShown: false }} />
+        <Stack.Screen name="score" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

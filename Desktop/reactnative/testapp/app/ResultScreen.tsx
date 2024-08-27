@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -18,6 +18,7 @@ interface ProductData {
 
 const ResultScreen = () => {
   const { productData } = useLocalSearchParams();
+  const router = useRouter();
   const screenWidth = Dimensions.get('window').width;
 
   if (!productData) {
@@ -42,6 +43,9 @@ const ResultScreen = () => {
     )
   );
 
+const navigateToScoreScreen = () => {
+  router.push('/score');
+};
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -105,9 +109,9 @@ const ResultScreen = () => {
               <Ionicons name="chevron-forward" size={24} color="#2C2C2C" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.healthScoreButton}>
-              <Text style={styles.healthScoreText}>View Health Score</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
+            <Text style={styles.healthScoreText}>View Health Score Scale</Text>
+          </TouchableOpacity>
           </View>
         </LinearGradient>
       </ScrollView>

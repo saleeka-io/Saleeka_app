@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter, useNavigation } from 'expo-router';
+import { useRouter, useNavigation, Href } from 'expo-router';
 
 interface ProductData {
   product_name: string;
@@ -28,7 +28,7 @@ const BarcodeScanner = () => {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      setScanned(false); // Reset the scanned state when returning to this screen
+      setScanned(false);
     });
 
     return unsubscribe;
@@ -36,7 +36,7 @@ const BarcodeScanner = () => {
 
   const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
-      setScanned(true); // Disable further scanning
+      setScanned(true);
       const { data } = scanningResult;
       const productData = await fetchProductData(data);
 
@@ -49,19 +49,19 @@ const BarcodeScanner = () => {
     }
   };
 
-
   useEffect(() => {
     // Directly simulate barcode scanning with a hardcoded barcode
     fetchProductData('0737628064502').then((productData) => {
-        if (productData) {
-            console.log("Ingredients:", productData.ingredients); // Log ingredients to check
-            const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-            router.push(`/ResultScreen?productData=${encodedProductData}`);
-        } else {
-            Alert.alert('Error', 'Failed to fetch product data');
-        }
+      // fetchProductData('07376280645').then((productData) => { ****** Uncomment if you want to see productnotfound
+      if (productData) {
+        console.log("Ingredients:", productData.ingredients); // Log ingredients to check
+        const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+        router.push(`/ResultScreen?productData=${encodedProductData}`);
+      } else {
+        router.push(`/ProductNotFound?barcode=073762806450`);
+      }
     });
-}, []);
+  }, []);
 
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {
@@ -74,6 +74,12 @@ const BarcodeScanner = () => {
         return null;
       }
 
+      if (!data.product) {
+        console.warn('Product not found');
+        router.push(`/ProductNotFound?barcode=${barcode}`);
+        return null;
+      }
+
       return {
         product_name: data.product?.product_name,
         calories: data.product?.nutriments?.energy_kcal || null,
@@ -81,10 +87,11 @@ const BarcodeScanner = () => {
         carbs: data.product?.nutriments?.carbohydrates || null,
         fat: data.product?.nutriments?.fat || null,
         image_url: data.product?.image_url || null,
-        ingredients: data.product.ingredients_text.split(', ') || null, // Split ingredients into an array
+        ingredients: data.product.ingredients_text.split(', ') || null,
       };
     } catch (error) {
       console.error('Error fetching product data:', error);
+      router.push(`/ProductNotFound?barcode=${barcode}`);
       return null;
     }
   };
@@ -112,18 +119,8 @@ const BarcodeScanner = () => {
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
-            'qr',
-            'ean13',
-            'ean8',
-            'upc_a',
-            'upc_e',
-            'code39',
-            'code128',
-            'codabar',
-            'interleaved2of5',
-            'pdf417',
-            'aztec',
-            'dataMatrix',
+            'qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code39', 'code128',
+            'codabar', 'interleaved2of5', 'pdf417', 'aztec', 'dataMatrix',
           ],
         }}
       >
