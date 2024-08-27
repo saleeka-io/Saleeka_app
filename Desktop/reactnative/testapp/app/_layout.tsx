@@ -1,21 +1,23 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Stack, useRouter } from 'expo-router'; // Ensure useRouter is imported
+import { ActivityIndicator, View } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { UserProvider } from '../context/UserContext';  // Ensure this path is correct
+import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default function Layout() {
   const colorScheme = useColorScheme();
-  const [loaded, error] = useFonts({
+  const router = useRouter(); // Initialize the router
+
+  const [fontsLoaded] = useFonts({
     "Poppins-Black": require("../assets/fonts/Poppins-Black.ttf"),
     "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
     "Poppins-ExtraBold": require("../assets/fonts/Poppins-ExtraBold.ttf"),
@@ -27,29 +29,67 @@ export default function RootLayout() {
     "Poppins-Thin": require("../assets/fonts/Poppins-Thin.ttf"),
   });
 
+  const [authChecking, setAuthChecking] = useState(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const [navigationTriggered, setNavigationTriggered] = useState(false);
+
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
-    return null;  // Continue showing the splash screen until fonts are loaded
+  // Firebase Authentication Check
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      setUser(user);
+      setAuthChecking(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Track when layout is ready
+  useEffect(() => {
+    if (!authChecking && fontsLoaded) {
+      setLayoutReady(true);
+    }
+  }, [authChecking, fontsLoaded]);
+
+  // Ensure navigation only happens once
+  useEffect(() => {
+    if (layoutReady && !navigationTriggered) {
+      if (user !== null) {
+        router.replace('/scan'); // Adjust to your camera screen route
+      } else {
+        router.replace('/login'); // Adjust to your login screen route
+      }
+      setNavigationTriggered(true); // Mark navigation as triggered
+    }
+  }, [layoutReady, user, router, navigationTriggered]);
+
+  if (!layoutReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
 
-  return (
-    <UserProvider> 
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
-          <Stack.Screen name="ProductNotFound" options={{ headerShown: false }} />
-          <Stack.Screen name="score" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </ThemeProvider>
-    </UserProvider>
+    return (
+      <UserProvider> 
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
+            <Stack.Screen name="ProductNotFound" options={{ headerShown: false }} />
+            <Stack.Screen name="score" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </ThemeProvider>
+      </UserProvider>
   );
 }
