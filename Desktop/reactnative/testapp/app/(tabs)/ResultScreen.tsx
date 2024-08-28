@@ -26,8 +26,7 @@ const ResultScreen = () => {
   }
 
   const product: ProductData = JSON.parse(decodeURIComponent(productData as string));
-
-  // Log the entire product data to inspect what fields are returned
+  const encodedImageUrl = product.image_url ? product.image_url.replace('/products/', '/products%2F') : '';  // Log the entire product data to inspect what fields are returned
   console.log('Product Data:', product);
 
   // Safety check to ensure ingredients is defined
@@ -36,6 +35,9 @@ const ResultScreen = () => {
   // Log the ingredients
   console.log('Ingredients:', ingredients);
 
+  // Log the image URL
+  console.log('Image URL:', product.image_url);
+
   // Check for banned ingredients
   const bannedIngredients = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
     ingredients.some((prodIngredient) =>
@@ -43,9 +45,10 @@ const ResultScreen = () => {
     )
   );
 
-const navigateToScoreScreen = () => {
-  router.push('/score');
-};
+  const navigateToScoreScreen = () => {
+    router.push('/score');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -54,7 +57,7 @@ const navigateToScoreScreen = () => {
         </Text>
         
         <View style={styles.imageContainer}>
-          <Image source={{ uri: product.image_url || '' }} style={styles.productImage} />
+          <Image source={{ uri: encodedImageUrl || '' }} style={styles.productImage} onError={(e) => console.log('Error loading image:', e.nativeEvent.error)} />
           <View style={styles.checkmarkContainer}>
             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
           </View>
@@ -110,8 +113,8 @@ const navigateToScoreScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
-            <Text style={styles.healthScoreText}>View Health Score Scale</Text>
-          </TouchableOpacity>
+              <Text style={styles.healthScoreText}>View Health Score Scale</Text>
+            </TouchableOpacity>
           </View>
         </LinearGradient>
       </ScrollView>

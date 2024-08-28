@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
-
 import { useUser } from '../../context/UserContext';
 
 interface ProductData {
@@ -31,7 +30,7 @@ const BarcodeScanner = () => {
   }, [hasPermission]);
 
   useEffect(() => {
-    const testBarcode = '73628064502'; // Hardcoded barcode for testing
+    const testBarcode = '3628064502'; // Hardcoded barcode for testing
     handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   }, []);
 
@@ -78,6 +77,7 @@ const BarcodeScanner = () => {
 
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {
+      // Attempt to fetch product data from OpenFoodFacts
       const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text`);
       const data = await response.json();
   
@@ -90,18 +90,24 @@ const BarcodeScanner = () => {
   
         if (!productDoc.empty) {  // Product found in Firestore
           const productData = productDoc.docs[0].data();
+          console.log('Raw Firestore product data:', productData);  // Log the entire product data
+  
+          const rawIngredients = productData.ingredients || '';
+          console.log('Raw ingredients field from Firestore:', rawIngredients);  // Log the raw ingredients field
+  
+          const ingredients = rawIngredients.trim().split(', ');
+          console.log('Parsed ingredients:', ingredients);
   
           return {
             product_name: productData.productName,
-            calories: null,  // You can update these fields if you have them in Firestore
+            calories: null,
             protein: null,
             carbs: null,
             fat: null,
             image_url: productData.productImageUrl,
-            ingredients: productData.ingredients ? productData.ingredients.split(', ') : [],  // Split ingredients string into array
+            ingredients: ingredients,
           };
         } else {
-          // If not found in Firestore, return null or handle accordingly
           console.log('Product not found in Firestore either.');
           return null;
         }

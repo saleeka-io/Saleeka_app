@@ -30,19 +30,21 @@ const ProductNotFound = () => {
 
   const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
     if (!uri) return null;
-
+  
     const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
     const storageRef = storage().ref(imageName);
     
     try {
       await storageRef.putFile(uploadUri);
       const downloadURL = await storageRef.getDownloadURL();
+      console.log("Uploaded Image URL:", downloadURL); // Log the URL to debug
       return downloadURL;
     } catch (error) {
       console.error("Error uploading image:", error);
       return null;
     }
   };
+  
 
   const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (cameraPermission === null) {
