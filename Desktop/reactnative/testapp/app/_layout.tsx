@@ -29,7 +29,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === '(auth)';
   
     if (!user && !inAuthGroup) {
-      router.replace('/login');
+      router.replace('/');
     } else if (user && inAuthGroup) {
       // Ensure navigation to the scan page only when needed
       router.replace('/scan');

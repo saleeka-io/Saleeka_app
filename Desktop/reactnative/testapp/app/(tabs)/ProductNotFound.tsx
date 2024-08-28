@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, ImageBackground, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView, Platform } from 'react-native'; // Import Platform here
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+import { useUser } from '../../context/UserContext'; // Assuming you're using a UserContext to get the user ID
 
 const ProductNotFound = () => {
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
@@ -12,6 +15,7 @@ const ProductNotFound = () => {
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
   const router = useRouter();
+  const { user } = useUser(); // Get the user from your context
 
   useEffect(() => {
     console.log('Received Barcode:', barcode);  // Debugging: log the received barcode
@@ -23,6 +27,22 @@ const ProductNotFound = () => {
 
     requestPermission();
   }, [barcode]);
+
+  const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
+    if (!uri) return null;
+
+    const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+    const storageRef = storage().ref(imageName);
+    
+    try {
+      await storageRef.putFile(uploadUri);
+      const downloadURL = await storageRef.getDownloadURL();
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
+  };
 
   const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (cameraPermission === null) {
@@ -58,11 +78,37 @@ const ProductNotFound = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting:', { barcodeState, productImage, ingredientsImage });
-    // Here you would typically send this data to your backend
-    Alert.alert('Submission Successful', 'Thank you for submitting the product information.');
-    router.back(); // Go back to the previous screen
+  const handleSubmit = async () => {
+    if (!barcodeState || !productImage || !ingredientsImage) {
+      Alert.alert('Missing Information', 'Please provide all required information before submitting.');
+      return;
+    }
+
+    const productImageUrl = await uploadImage(productImage, `products/${barcodeState}_front.jpg`);
+    const ingredientsImageUrl = await uploadImage(ingredientsImage, `products/${barcodeState}_ingredients.jpg`);
+
+    if (!productImageUrl || !ingredientsImageUrl) {
+      Alert.alert('Image Upload Failed', 'Failed to upload images. Please try again.');
+      return;
+    }
+
+    try {
+      await firestore().collection('products').add({
+        userId: user?.uid, // Include the user ID in the submission
+        barcode: barcodeState,
+        productImageUrl, // Save the download URL instead of the local file path
+        ingredientsImageUrl, // Save the download URL instead of the local file path
+        productName: "to be added", // Default placeholder value
+        ingredients: "to be added", // Default placeholder value
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+
+      Alert.alert('Submission Successful', 'Thank you for submitting the product information.');
+      router.back(); // Go back to the previous screen
+    } catch (error) {
+      console.error('Error adding document to Firestore:', error);
+      Alert.alert('Submission Failed', 'There was an error submitting the product information. Please try again later.');
+    }
   };
 
   if (cameraPermission === null) {
@@ -81,64 +127,59 @@ const ProductNotFound = () => {
   }
 
   return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Image
-            source={require('../../assets/images/logo.png')} // Add your app logo
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Product Not Found</Text>
-          <Text style={styles.message}>
-            Result not found. Please upload product info for flag score
-          </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Image
+          source={require('../../assets/images/logo.png')} // Add your app logo
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>Product Not Found</Text>
+        <Text style={styles.message}>
+          Result not found. Please upload product info for flag score
+        </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Input Barcode Number"
-            value={barcodeState}
-            onChangeText={text => setBarcodeState(text)}
-            placeholderTextColor="#888"
-          />
+        <TextInput
+          style={styles.input}
+          placeholder="Input Barcode Number"
+          value={barcodeState}
+          onChangeText={text => setBarcodeState(text)}
+          placeholderTextColor="#888"
+        />
 
-          <View style={styles.uploadContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setProductImage)}>
-              <Ionicons name="camera" size={32} color="#fff" />
-              <Text style={styles.uploadText}>Front of Product</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setProductImage)}>
-              <Ionicons name="image-outline" size={32} color="#fff" />
-              {productImage && <Image source={{ uri: productImage }} style={styles.imagePreview} />}
-              <Text style={styles.uploadText}>Front Image of Product</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.uploadContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setIngredientsImage)}>
-              <Ionicons name="camera" size={32} color="#fff" />
-              <Text style={styles.uploadText}>Ingredients Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setIngredientsImage)}>
-              <Ionicons name="image-outline" size={32} color="#fff" />
-              {ingredientsImage && <Image source={{ uri: ingredientsImage }} style={styles.imagePreview} />}
-              <Text style={styles.uploadText}>Back Image of Product</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitText}>Submit</Text>
+        <View style={styles.uploadContainer}>
+          <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setProductImage)}>
+            <Ionicons name="camera" size={32} color="#fff" />
+            <Text style={styles.uploadText}>Front of Product</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setProductImage)}>
+            <Ionicons name="image-outline" size={32} color="#fff" />
+            {productImage && <Image source={{ uri: productImage }} style={styles.imagePreview} />}
+            <Text style={styles.uploadText}>Front Image of Product</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+
+        <View style={styles.uploadContainer}>
+          <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setIngredientsImage)}>
+            <Ionicons name="camera" size={32} color="#fff" />
+            <Text style={styles.uploadText}>Ingredients Image</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setIngredientsImage)}>
+            <Ionicons name="image-outline" size={32} color="#fff" />
+            {ingredientsImage && <Image source={{ uri: ingredientsImage }} style={styles.imagePreview} />}
+            <Text style={styles.uploadText}>Back Image of Product</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   container: {
     flex: 1,
     backgroundColor: 'rgba(58, 106, 100, 0.9)', // Semi-transparent overlay
@@ -165,11 +206,6 @@ const styles = StyleSheet.create({
     color: '#f1ede1',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  orText: {
-    fontSize: 18,
-    color: '#fff',
-    marginVertical: 15,
   },
   input: {
     width: '100%',
