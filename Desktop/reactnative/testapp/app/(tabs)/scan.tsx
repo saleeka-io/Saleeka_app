@@ -43,17 +43,22 @@ const BarcodeScanner = () => {
       const productData = await fetchProductData(data);
   
       if (productData) {
-         saveScanData(data);
+        saveScanData(data);
         const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+  
+        // Prevent double push
+        if (navigation.canGoBack()) {
+          navigation.goBack(); // Or use router.back();
+        }
+  
         router.push(`/ResultScreen?productData=${encodedProductData}`);
       } else {
-        // Navigate to a custom form screen for entering product data
         router.push(`/ProductNotFound?barcode=${data}`);
-        // router.replace('/ProductNotFound')
         Alert.alert('Product Not Found', 'Please help by providing product information.');
       }
     }
   };
+  
   const saveScanData = async (barcode: string) => {
     if (!user) {
       console.error("No user logged in to save scan data.");

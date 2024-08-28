@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
-import bannedIngredientsData from './bannedIngredients.json';
+import bannedIngredientsData from '../bannedIngredients.json';
 
 interface ProductData {
   product_name: string;

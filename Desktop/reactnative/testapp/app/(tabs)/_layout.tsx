@@ -42,6 +42,20 @@ const TabsLayout = () => {
           )
         }}
       />
+      <Tabs.Screen
+        name="ResultScreen"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="ProductNotFound"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      />
     </Tabs>
   );
 };

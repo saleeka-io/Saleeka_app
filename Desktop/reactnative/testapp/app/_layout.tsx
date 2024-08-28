@@ -1,22 +1,46 @@
-import { Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useEffect, useState } from 'react';
-import { Stack, useRouter } from 'expo-router'; // Ensure useRouter is imported
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
+import { Slot, Stack, useRouter, useSegments } from 'expo-router';
+import { ActivityIndicator } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
-import { UserProvider } from '../context/UserContext';  // Ensure this path is correct
+import { UserProvider } from '../context/UserContext';
 import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 SplashScreen.preventAutoHideAsync();
 
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const inAuthGroup = segments[0] === '(auth)';
+  
+    if (!user && !inAuthGroup) {
+      router.replace('/login');
+    } else if (user && inAuthGroup) {
+      // Ensure navigation to the scan page only when needed
+      router.replace('/scan');
+    }
+  }, [user, segments]);
+  
+  return <>{children}</>;
+}
+
 export default function Layout() {
   const colorScheme = useColorScheme();
-  const router = useRouter(); // Initialize the router
-
   const [fontsLoaded] = useFonts({
     "Poppins-Black": require("../assets/fonts/Poppins-Black.ttf"),
     "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
@@ -29,47 +53,30 @@ export default function Layout() {
     "Poppins-Thin": require("../assets/fonts/Poppins-Thin.ttf"),
   });
 
-  const [authChecking, setAuthChecking] = useState(true);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
-  const [layoutReady, setLayoutReady] = useState(false);
-  const [navigationTriggered, setNavigationTriggered] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    async function prepare() {
+      try {
+        await SplashScreen.preventAutoHideAsync();
+        // Any other initialization logic can go here
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppIsReady(true);
+      }
     }
-  }, [fontsLoaded]);
 
-  // Firebase Authentication Check
-  useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((user) => {
-      setUser(user);
-      setAuthChecking(false);
-    });
-
-    return () => unsubscribe();
+    prepare();
   }, []);
 
-  // Track when layout is ready
   useEffect(() => {
-    if (!authChecking && fontsLoaded) {
-      setLayoutReady(true);
+    if (appIsReady && fontsLoaded) {
+      SplashScreen.hideAsync();
     }
-  }, [authChecking, fontsLoaded]);
+  }, [appIsReady, fontsLoaded]);
 
-  // Ensure navigation only happens once
-  useEffect(() => {
-    if (layoutReady && !navigationTriggered) {
-      if (user !== null) {
-        router.replace('/scan'); // Adjust to your camera screen route
-      } else {
-        router.replace('/login'); // Adjust to your login screen route
-      }
-      setNavigationTriggered(true); // Mark navigation as triggered
-    }
-  }, [layoutReady, user, router, navigationTriggered]);
-
-  if (!layoutReady) {
+  if (!appIsReady || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -77,19 +84,20 @@ export default function Layout() {
     );
   }
 
-    return (
-      <UserProvider> 
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+  return (
+    <UserProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AuthWrapper>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="ResultScreen" options={{ headerShown: false }} />
             <Stack.Screen name="ProductNotFound" options={{ headerShown: false }} />
             <Stack.Screen name="score" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
-        </ThemeProvider>
-      </UserProvider>
+        </AuthWrapper>
+      </ThemeProvider>
+    </UserProvider>
   );
 }

@@ -84,7 +84,7 @@ const ProductNotFound = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <Image
-            source={require('../assets/images/logo.png')} // Add your app logo
+            source={require('../../assets/images/logo.png')} // Add your app logo
             style={styles.logo}
             resizeMode="contain"
           />
@@ -92,8 +92,6 @@ const ProductNotFound = () => {
           <Text style={styles.message}>
             Result not found. Please upload product info for flag score
           </Text>
-
-          <Text style={styles.orText}>OR</Text>
 
           <TextInput
             style={styles.input}

@@ -54,7 +54,7 @@ const Profile = () => {
         <TouchableOpacity style={styles.menuItem}>
           <Ionicons name="flag-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Learn About Our Flags</Text>
-          <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
+          <Ionicons name="chevron-forward" size={24} color="#3A6A64"/>
         </TouchableOpacity>
       </View>
 
