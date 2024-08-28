@@ -56,6 +56,20 @@ const TabsLayout = () => {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="ComingSoon"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="Donation"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      />
     </Tabs>
   );
 };

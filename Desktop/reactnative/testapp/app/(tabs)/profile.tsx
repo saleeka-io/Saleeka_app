@@ -16,6 +16,14 @@ const Profile = () => {
     }
   };
 
+  const handleMenuItemPress = (route: string) => {
+    if (route === 'score') {
+      router.push('/score');
+    } else {
+      router.push('/ComingSoon');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -36,22 +44,22 @@ const Profile = () => {
       </View>
 
       <View style={styles.section}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="calendar-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Scan History</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="warning-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Allergies</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="cube-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Products Sent</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('score')}>
           <Ionicons name="flag-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Learn About Our Flags</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64"/>
@@ -59,12 +67,12 @@ const Profile = () => {
       </View>
 
       <View style={styles.section}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="language-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Language</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="mail-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Contact Us</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />

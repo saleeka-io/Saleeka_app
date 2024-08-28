@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 
 import { useUser } from '../../context/UserContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProductData {
   product_name: string;
@@ -130,11 +131,10 @@ const BarcodeScanner = () => {
         </TouchableOpacity>
       </View>
     );
-  
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <CameraView
         ref={cameraRef}
         style={styles.camera}
@@ -146,54 +146,67 @@ const BarcodeScanner = () => {
           ],
         }}
       >
-        {scanned && (
-          <TouchableOpacity style={styles.buttonOverlay} onPress={() => setScanned(false)}>
-            <Text style={styles.scanAgainText}>Tap to Scan Again</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.overlay}>
+          <View style={styles.scanArea} />
+        </View>
       </CameraView>
-    </View>
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.switchButton}>
+          <Ionicons name="flash-off" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.switchButton}>
+          <Ionicons name="camera-reverse-outline" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
+    backgroundColor: 'black',
   },
   camera: {
     flex: 1,
   },
-  buttonOverlay: {
-    flex: 1,
-    alignSelf: 'center',
-    alignItems: 'center',
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
+    alignItems: 'center',
   },
-  scanAgainText: {
+  scanArea: {
+    width: 200,
+    height: 200,
+    borderWidth: 2,
+    borderColor: 'white',
+    backgroundColor: 'transparent',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  switchButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  message: {
     color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
     textAlign: 'center',
+    paddingBottom: 10,
   },
   button: {
-    flex: 1,
-    alignSelf: 'flex-end',
     alignItems: 'center',
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
   },
   text: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: 'white',
+    fontSize: 16,
   },
 });
 
