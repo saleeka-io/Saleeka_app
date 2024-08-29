@@ -10,7 +10,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await auth().signOut();
-      router.replace('/login'); // Redirect to login after logout
+      router.replace('/Home'); // Redirect to login after logout
     } catch (error) {
       console.error('Failed to log out:', error);
     }
@@ -19,8 +19,11 @@ const Profile = () => {
   const handleMenuItemPress = (route: string) => {
     if (route === 'score') {
       router.push('/score');
-    } else {
+    } else if (route == 'coming-soon'){
       router.push('/ComingSoon');
+    }
+    else{
+      router.push('/ContactUs');
     }
   };
 
@@ -72,7 +75,7 @@ const Profile = () => {
           <Text style={styles.menuItemText}>Language</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('ContactUs')}>
           <Ionicons name="mail-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Contact Us</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />

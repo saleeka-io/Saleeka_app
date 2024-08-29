@@ -29,7 +29,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === '(auth)';
   
     if (!user && !inAuthGroup) {
-      router.replace('/login');
+      router.replace('/Home');
     } else if (user && inAuthGroup) {
       // Ensure navigation to the scan page only when needed
       router.replace('/scan');
@@ -89,11 +89,13 @@ export default function Layout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AuthWrapper>
           <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
+            {/* <Stack.Screen name="index" options={{ headerShown: false }} /> */}
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="ProductNotFound" options={{ headerShown: false }} />
             <Stack.Screen name="score" options={{ headerShown: false }} />
+            <Stack.Screen name="ContactUs" options={{ headerShown: false }} />
+            <Stack.Screen name="Donation" options={{ headerShown: false }} />
+            <Stack.Screen name="ComingSoon" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
         </AuthWrapper>

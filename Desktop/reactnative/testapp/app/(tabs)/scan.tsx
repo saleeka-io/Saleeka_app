@@ -15,6 +15,7 @@ interface ProductData {
   fat: number | null;
   image_url: string | null;
   ingredients: string[] | null;
+  additives: { code: string; name: string }[] | null;
 }
 
 const BarcodeScanner = () => {
@@ -32,10 +33,10 @@ const BarcodeScanner = () => {
   }, [hasPermission]);
 
   // Testing barcode automatically on component mount
-  useEffect(() => {
-    const testBarcode = '0737628064502'; // Hardcoded barcode for testing
-    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  }, []);
+  // useEffect(() => {
+  //   const testBarcode = '0737628064502'; // Hardcoded barcode for testing
+  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  // }, []);
 
   const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
@@ -51,10 +52,15 @@ const BarcodeScanner = () => {
         if (navigation.canGoBack()) {
           navigation.goBack(); // Or use router.back();
         }
-  
-        router.push(`/ResultScreen?productData=${encodedProductData}`);
+        
+        while (router.canGoBack()) { // Pop from stack until one element is left
+          router.back();
+        }
+        router.replace(`/ResultScreen?productData=${encodedProductData}`);
+
+        // router.replace(`/ResultScreen?productData=${encodedProductData}`);
       } else {
-        router.push(`/ProductNotFound?barcode=${data}`);
+        router.replace(`/ProductNotFound?barcode=${data}`);
         Alert.alert('Product Not Found', 'Please help by providing product information.');
       }
     }
@@ -97,15 +103,23 @@ const BarcodeScanner = () => {
 
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {
-      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text`);
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text,additives_tags`);
       const data = await response.json();
-  
+
       if (data.status === 0) {  // Checking if the product is not found
         console.log('Product not found for barcode:', barcode);
-        saveScanData(data);
+        saveScanData(barcode);
         return null;
       }
-  
+
+      const additives = data.product?.additives_tags?.map((additive: string, index: number) => {
+        const code = additive.replace('en:', '').toUpperCase();
+        const originalTag = data.product?.additives_original_tags?.[index]?.replace('en:', '') || '';
+        const name = originalTag.split(' - ')[1] || originalTag;
+        return { code, name };
+      }) || [];
+      console.log(data.product);
+
       return {
         product_name: data.product?.product_name,
         calories: data.product?.nutriments?.energy_kcal || null,
@@ -114,10 +128,11 @@ const BarcodeScanner = () => {
         fat: data.product?.nutriments?.fat || null,
         image_url: data.product?.image_url || null,
         ingredients: data.product.ingredients_text ? data.product.ingredients_text.split(', ') : null,
+        additives: additives,
       };
     } catch (error) {
       console.error('Error fetching product data:', error);
-      router.push(`/ProductNotFound?barcode=${barcode}`);
+      router.replace(`/ProductNotFound?barcode=${barcode}`);
       return null;
     }
   };

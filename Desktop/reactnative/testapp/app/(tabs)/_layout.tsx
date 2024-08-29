@@ -56,7 +56,7 @@ const TabsLayout = () => {
           href: null,
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="ComingSoon"
         options={{
           headerShown: false,
@@ -70,6 +70,13 @@ const TabsLayout = () => {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="ContactUs"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      /> */}
     </Tabs>
   );
 };

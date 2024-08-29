@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import bannedIngredientsData from '../bannedIngredients.json';
 interface ProductData {
   product_name: string;
   ingredients: string[];
+  additives: { code: string; name: string }[];
   calories: number | null;
   protein: number | null;
   carbs: number | null;
@@ -16,47 +17,91 @@ interface ProductData {
   image_url: string | null;
 }
 
+interface BannedIngredient {
+  name: string;
+  casNumber: string;
+  reason: string;
+  severity: 'red' | 'yellow' | 'green';
+}
+
 const ResultScreen = () => {
   const { productData } = useLocalSearchParams();
   const router = useRouter();
-  const screenWidth = Dimensions.get('window').width;
+  const fillAnimation = useRef(new Animated.Value(0)).current;
+  const [showAdditives, setShowAdditives] = useState(false);
 
   if (!productData) {
     return <Text>Product data not found</Text>;
   }
+  
 
   const product: ProductData = JSON.parse(decodeURIComponent(productData as string));
-
-  // Log the entire product data to inspect what fields are returned
-  console.log('Product Data:', product);
-
-  // Safety check to ensure ingredients is defined
   const ingredients = product.ingredients || [];
+  const additives = product.additives || [];
 
-  // Log the ingredients
-  console.log('Ingredients:', ingredients);
-
-  // Check for banned ingredients
-  const bannedIngredients = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
+  const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
     ingredients.some((prodIngredient) =>
       prodIngredient.toLowerCase().includes(ingredient.name.toLowerCase())
     )
-  );
+  ) as BannedIngredient[];
 
-const navigateToScoreScreen = () => {
-  router.push('/score');
-};
+  const calculateRating = (bannedIngredients: BannedIngredient[]): { rating: string; color: string; fillPercentage: number; icon: string } => {
+    if (bannedIngredients.length === 0) {
+      return { rating: 'Excellent', color: '#4CAF50', fillPercentage: 100, icon: 'checkmark-circle' };
+    }
+
+    const severityCount = {
+      red: bannedIngredients.filter(i => i.severity === 'red').length,
+      yellow: bannedIngredients.filter(i => i.severity === 'yellow').length,
+      green: bannedIngredients.filter(i => i.severity === 'green').length,
+    };
+
+    if (severityCount.red > 0) {
+      return { rating: 'Poor', color: '#D32F2F', fillPercentage: 25, icon: 'close-circle' };
+    } else if (severityCount.yellow > 0) {
+      return { rating: 'Fair', color: '#FFA000', fillPercentage: 50, icon: 'alert-circle' };
+    } else {
+      return { rating: 'Good', color: '#4CAF50', fillPercentage: 75, icon: 'checkmark-circle' };
+    }
+  };
+
+  const { rating, color, fillPercentage, icon } = calculateRating(bannedIngredients);
+
+  useEffect(() => {
+    // Delay the animation by 500ms
+    setTimeout(() => {
+      Animated.timing(fillAnimation, {
+        toValue: fillPercentage,
+        duration: 1500, // Increased duration for better visibility
+        useNativeDriver: false,
+      }).start();
+    }, 500);
+  }, [fillPercentage]);
+
+  const navigateToScoreScreen = () => {
+    router.push('/score');
+  };
+
+  const width = fillAnimation.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  const toggleAdditives = () => {
+    setShowAdditives(!showAdditives);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>
           Product Analysis by <Text style={styles.titleHighlight}>Saleeka</Text>
         </Text>
-        
+
         <View style={styles.imageContainer}>
           <Image source={{ uri: product.image_url || '' }} style={styles.productImage} />
-          <View style={styles.checkmarkContainer}>
-            <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>
+            <Ionicons name={icon} size={24} color="#FFFFFF" />
           </View>
         </View>
 
@@ -70,6 +115,15 @@ const navigateToScoreScreen = () => {
               <Text style={styles.productName}>{product.product_name}</Text>
             </View>
 
+            <View style={styles.ratingBar}>
+              <View style={styles.ratingRow}>
+                <View style={styles.ratingIndicator}>
+                  <Animated.View style={[styles.ratingFill, { width, backgroundColor: color }]} />
+                </View>
+                <Text style={[styles.rating, { color }]}>Product Rating: {rating}</Text>
+              </View>
+            </View>
+
             {bannedIngredients.length > 0 && (
               <View style={styles.warningSection}>
                 <Text style={styles.warningTitle}>Warning! This product contains:</Text>
@@ -81,37 +135,37 @@ const navigateToScoreScreen = () => {
               </View>
             )}
 
-            <View style={styles.ratingBar}>
-              <Text style={styles.learnMore}>*Learn more</Text>
-              <View style={styles.ratingRow}>
-                <View style={styles.ratingIndicator}>
-                  <View style={styles.ratingFill} />
-                </View>
-                <Text style={styles.rating}>Product Rating: Excellent</Text>
-              </View>
-            </View>
-
             <View style={styles.nutritionalInfo}>
               <Text style={styles.nutritionalTitle}>Per Serving:</Text>
-              <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories}</Text>
-              <Text style={styles.nutritionalText}>Protein: {product.protein}g</Text>
-              <Text style={styles.nutritionalText}>Carbs: {product.carbs}g</Text>
-              <Text style={styles.nutritionalText}>Fats: {product.fat}g</Text>
+              <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories ? product.calories.toFixed(1) : 'N/A'}</Text>
+              <Text style={styles.nutritionalText}>Protein: {product.protein ? product.protein.toFixed(1) : 'N/A'}g</Text>
+              <Text style={styles.nutritionalText}>Carbs: {product.carbs ? product.carbs.toFixed(1) : 'N/A'}g</Text>
+              <Text style={styles.nutritionalText}>Fats: {product.fat ? product.fat.toFixed(1) : 'N/A'}g</Text>
             </View>
 
-            <TouchableOpacity style={styles.section}>
+            <TouchableOpacity style={styles.section} onPress={toggleAdditives}>
               <Text style={styles.sectionTitle}>Additives</Text>
-              <Ionicons name="chevron-forward" size={24} color="#2C2C2C" />
+              <Ionicons name={showAdditives ? "chevron-up" : "chevron-down"} size={24} color="#2C2C2C" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.section}>
-              <Text style={styles.sectionTitle}>Allergies</Text>
-              <Ionicons name="chevron-forward" size={24} color="#2C2C2C" />
-            </TouchableOpacity>
+            {showAdditives && (
+          <View style={styles.additivesContent}>
+            {additives.length > 0 ? (
+              additives.map((additive, index) => (
+                <Text key={index} style={styles.additiveText}>
+                  {additive.code} - {additive.name}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.additiveText}>No additives found</Text>
+            )}
+          </View>
+        )}
+
 
             <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
-            <Text style={styles.healthScoreText}>View Health Score Scale</Text>
-          </TouchableOpacity>
+              <Text style={styles.healthScoreText}>View Health Score Scale</Text>
+            </TouchableOpacity>
           </View>
         </LinearGradient>
       </ScrollView>
@@ -122,10 +176,21 @@ const navigateToScoreScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#f1ede1',
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  additivesTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#2C2C2C',
+  },
+  additiveText: {
+    fontSize: 14,
+    color: '#2C2C2C',
+    marginBottom: 5,
   },
   title: {
     fontSize: 22,
@@ -135,18 +200,64 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
+  section: {
+    backgroundColor: '#E8F5E9',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 0,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
+  },
+  additivesContent: {
+    backgroundColor: '#E8F5E9',
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    padding: 16,
+    marginTop: -10,
+    marginBottom: 15,
+  },
+  additiveText: {
+    fontSize: 14,
+    color: '#2C2C2C',
+    marginBottom: 5,
+  },
   titleHighlight: {
     color: '#43A047',
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
+    marginBottom: -20,
   },
   imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   productImage: {
     width: 200,
     height: 200,
     resizeMode: 'contain',
+  },
+  iconContainer: {
+    position: 'absolute',
+    right: 60,
+    top: '50%',
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   checkmarkContainer: {
     position: 'absolute',
@@ -195,36 +306,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 2,
   },
-  ratingBar: {
-    marginBottom: 10,
-  },
   learnMore: {
     fontSize: 12,
     color: '#FFFFFF',
     marginBottom: 5,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rating: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  ratingIndicator: {
-    flex: 1,
-    backgroundColor: '#E0E0E0',
-    height: 8,
-    borderRadius: 4,
-    marginRight: 10,
-  },
-  ratingFill: {
-    backgroundColor: '#66BB6A',
-    height: 8,
-    borderRadius: 4,
-    width: '85%',
   },
   nutritionalInfo: {
     backgroundColor: '#F1F8E9',
@@ -243,20 +328,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 2,
   },
-  section: {
-    backgroundColor: '#E8F5E9',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
-  },
   healthScoreButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 25,
@@ -268,6 +339,30 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  ratingBar: {
+    marginBottom: 10,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rating: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  ratingIndicator: {
+    flex: 1,
+    backgroundColor: '#E0E0E0',
+    height: 8,
+    borderRadius: 4,
+    marginRight: 10,
+    overflow: 'hidden',
+  },
+  ratingFill: {
+    height: '100%',
+    borderRadius: 4,
   },
 });
 

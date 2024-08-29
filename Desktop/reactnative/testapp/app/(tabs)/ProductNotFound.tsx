@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, ImageBackground, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ const ProductNotFound = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('Received Barcode:', barcode);  // Debugging: log the received barcode
+    console.log('Received Barcode:', barcode);
 
     const requestPermission = async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
@@ -45,24 +45,10 @@ const ProductNotFound = () => {
     }
   };
 
-  const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  };
-
   const handleSubmit = () => {
     console.log('Submitting:', { barcodeState, productImage, ingredientsImage });
-    // Here you would typically send this data to your backend
     Alert.alert('Submission Successful', 'Thank you for submitting the product information.');
-    router.back(); // Go back to the previous screen
+    router.back();
   };
 
   if (cameraPermission === null) {
@@ -81,67 +67,61 @@ const ProductNotFound = () => {
   }
 
   return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Image
-            source={require('../../assets/images/logo.png')} // Add your app logo
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Product Not Found</Text>
-          <Text style={styles.message}>
-            Result not found. Please upload product info for flag score
-          </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>Product Not Found</Text>
+        <Text style={styles.message}>
+          Result not found. Please upload product info for flag score
+        </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Input Barcode Number"
-            value={barcodeState}
-            onChangeText={text => setBarcodeState(text)}
-            placeholderTextColor="#888"
-          />
+        <TextInput
+          style={styles.input}
+          placeholder="Input Barcode Number"
+          value={barcodeState}
+          onChangeText={text => setBarcodeState(text)}
+          placeholderTextColor="#888"
+        />
 
-          <View style={styles.uploadContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setProductImage)}>
-              <Ionicons name="camera" size={32} color="#fff" />
-              <Text style={styles.uploadText}>Front of Product</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setProductImage)}>
-              <Ionicons name="image-outline" size={32} color="#fff" />
-              {productImage && <Image source={{ uri: productImage }} style={styles.imagePreview} />}
-              <Text style={styles.uploadText}>Front Image of Product</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.uploadContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => takePhoto(setIngredientsImage)}>
-              <Ionicons name="camera" size={32} color="#fff" />
-              <Text style={styles.uploadText}>Ingredients Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.uploadButton} onPress={() => pickImage(setIngredientsImage)}>
-              <Ionicons name="image-outline" size={32} color="#fff" />
-              {ingredientsImage && <Image source={{ uri: ingredientsImage }} style={styles.imagePreview} />}
-              <Text style={styles.uploadText}>Back Image of Product</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitText}>Submit</Text>
+        <View style={styles.photoContainer}>
+          <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setProductImage)}>
+            {productImage ? (
+              <Image source={{ uri: productImage }} style={styles.takenPhoto} />
+            ) : (
+              <>
+                <Ionicons name="camera" size={32} color="#fff" />
+                <Text style={styles.photoText}>Front of Product</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setIngredientsImage)}>
+            {ingredientsImage ? (
+              <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
+            ) : (
+              <>
+                <Ionicons name="camera" size={32} color="#fff" />
+                <Text style={styles.photoText}>Image of Ingredients</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(58, 106, 100, 0.9)', // Semi-transparent overlay
+    backgroundColor: 'rgba(58, 106, 100, 0.9)',
   },
   content: {
     flex: 1,
@@ -166,11 +146,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  orText: {
-    fontSize: 18,
-    color: '#fff',
-    marginVertical: 15,
-  },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -181,30 +156,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  uploadContainer: {
+  photoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 20,
   },
-  uploadButton: {
+  photoButton: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(47, 86, 81, 0.8)',
     padding: 15,
     borderRadius: 15,
     marginHorizontal: 5,
+    height: 150,
   },
-  uploadText: {
+  photoText: {
     color: '#fff',
     marginTop: 5,
     textAlign: 'center',
   },
-  imagePreview: {
-    width: 50,
-    height: 50,
-    marginTop: 10,
-    borderRadius: 5,
+  takenPhoto: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
   },
   submitButton: {
     backgroundColor: '#f1ede1',
