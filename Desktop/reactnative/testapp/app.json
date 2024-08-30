@@ -13,6 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow you to upload profile pictures and other media."
+       },
+
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "com.anonymous.testapp"
