@@ -11,7 +11,7 @@ const Disclaimer = () => {
     // AsyncStorage.setItem('hasAgreedToDisclaimer', 'true');
     
     // Route to the index page
-    router.replace('/');
+    router.replace('/SignUp');
   };
 
   return (

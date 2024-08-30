@@ -4,6 +4,9 @@ import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+
+import avocadoAnimation from '../../assets/lottie/Avocado.json';
 
 const ProductNotFound = () => {
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
@@ -11,6 +14,7 @@ const ProductNotFound = () => {
   const [productImage, setProductImage] = useState<string | null>(null);
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,8 +51,10 @@ const ProductNotFound = () => {
 
   const handleSubmit = () => {
     console.log('Submitting:', { barcodeState, productImage, ingredientsImage });
-    Alert.alert('Submission Successful', 'Thank you for submitting the product information.');
-    router.back();
+    setSubmitted(true);
+    setTimeout(() => {
+      router.push('/scan');
+    }, 4000); // Adjust this timing based on the animation duration
   };
 
   if (cameraPermission === null) {
@@ -68,55 +74,68 @@ const ProductNotFound = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Image
-          source={require('../../assets/images/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>Product Not Found</Text>
-        <Text style={styles.message}>
-          Result not found. Please upload product info for flag score
-        </Text>
+      {!submitted ? (
+        <View style={styles.content}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Product Not Found</Text>
+          <Text style={styles.message}>
+            Result not found. Please upload product info for flag score
+          </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Input Barcode Number"
-          value={barcodeState}
-          onChangeText={text => setBarcodeState(text)}
-          placeholderTextColor="#888"
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Input Barcode Number"
+            value={barcodeState}
+            onChangeText={text => setBarcodeState(text)}
+            placeholderTextColor="#888"
+          />
 
-        <View style={styles.photoContainer}>
-          <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setProductImage)}>
-            {productImage ? (
-              <Image source={{ uri: productImage }} style={styles.takenPhoto} />
-            ) : (
-              <>
-                <Ionicons name="camera" size={32} color="#fff" />
-                <Text style={styles.photoText}>Front of Product</Text>
-              </>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setIngredientsImage)}>
-            {ingredientsImage ? (
-              <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
-            ) : (
-              <>
-                <Ionicons name="camera" size={32} color="#fff" />
-                <Text style={styles.photoText}>Image of Ingredients</Text>
-              </>
-            )}
+          <View style={styles.photoContainer}>
+            <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setProductImage)}>
+              {productImage ? (
+                <Image source={{ uri: productImage }} style={styles.takenPhoto} />
+              ) : (
+                <>
+                  <Ionicons name="camera" size={32} color="#fff" />
+                  <Text style={styles.photoText}>Front of Product</Text>
+                </>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setIngredientsImage)}>
+              {ingredientsImage ? (
+                <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
+              ) : (
+                <>
+                  <Ionicons name="camera" size={32} color="#fff" />
+                  <Text style={styles.photoText}>Image of Ingredients</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitText}>Submit</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitText}>Submit</Text>
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.centeredContainer}>
+          <LottieView
+            source={avocadoAnimation}
+            autoPlay
+            loop={false}
+            style={styles.avocadoAnimation}
+          />
+          <Text style={styles.thankYouText}>Thank You, your submission is being processed</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -194,6 +213,21 @@ const styles = StyleSheet.create({
     color: '#3A6A64',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avocadoAnimation: {
+    width: 200,
+    height: 200,
+  },
+  thankYouText: {
+    marginTop: 20,
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
   },
 });
 

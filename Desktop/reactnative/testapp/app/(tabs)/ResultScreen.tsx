@@ -2,9 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+
+import redXAnimation from '../../assets/lottie/RedX.json';
+import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
+import cautionAnimation from '../../assets/lottie/Caution.json';
 
 import bannedIngredientsData from '../bannedIngredients.json';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProductData {
   product_name: string;
@@ -33,7 +38,6 @@ const ResultScreen = () => {
   if (!productData) {
     return <Text>Product data not found</Text>;
   }
-  
 
   const product: ProductData = JSON.parse(decodeURIComponent(productData as string));
   const ingredients = product.ingredients || [];
@@ -45,27 +49,29 @@ const ResultScreen = () => {
     )
   ) as BannedIngredient[];
 
-  const calculateRating = (bannedIngredients: BannedIngredient[]): { rating: string; color: string; fillPercentage: number; icon: string } => {
+  const calculateRating = (
+    bannedIngredients: BannedIngredient[]
+  ): { rating: string; color: string; fillPercentage: number; animation: any } => {
     if (bannedIngredients.length === 0) {
-      return { rating: 'Excellent', color: '#4CAF50', fillPercentage: 100, icon: 'checkmark-circle' };
+      return { rating: 'Excellent', color: '#4CAF50', fillPercentage: 100, animation: checkmarkAnimation };
     }
 
     const severityCount = {
-      red: bannedIngredients.filter(i => i.severity === 'red').length,
-      yellow: bannedIngredients.filter(i => i.severity === 'yellow').length,
-      green: bannedIngredients.filter(i => i.severity === 'green').length,
+      red: bannedIngredients.filter((i) => i.severity === 'red').length,
+      yellow: bannedIngredients.filter((i) => i.severity === 'yellow').length,
+      green: bannedIngredients.filter((i) => i.severity === 'green').length,
     };
 
     if (severityCount.red > 0) {
-      return { rating: 'Poor', color: '#D32F2F', fillPercentage: 25, icon: 'close-circle' };
+      return { rating: 'Poor', color: '#D32F2F', fillPercentage: 25, animation: redXAnimation };
     } else if (severityCount.yellow > 0) {
-      return { rating: 'Fair', color: '#FFA000', fillPercentage: 50, icon: 'alert-circle' };
+      return { rating: 'Fair', color: '#FFA000', fillPercentage: 50, animation: cautionAnimation };
     } else {
-      return { rating: 'Good', color: '#4CAF50', fillPercentage: 75, icon: 'checkmark-circle' };
+      return { rating: 'Good', color: '#4CAF50', fillPercentage: 75, animation: checkmarkAnimation };
     }
   };
 
-  const { rating, color, fillPercentage, icon } = calculateRating(bannedIngredients);
+  const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
 
   useEffect(() => {
     // Delay the animation by 500ms
@@ -75,7 +81,7 @@ const ResultScreen = () => {
         duration: 1500, // Increased duration for better visibility
         useNativeDriver: false,
       }).start();
-    }, 500);
+    }, 750);
   }, [fillPercentage]);
 
   const navigateToScoreScreen = () => {
@@ -100,13 +106,24 @@ const ResultScreen = () => {
 
         <View style={styles.imageContainer}>
           <Image source={{ uri: product.image_url || '' }} style={styles.productImage} />
-          <View style={[styles.iconContainer, { backgroundColor: color }]}>
-            <Ionicons name={icon} size={24} color="#FFFFFF" />
-          </View>
+          <LottieView
+          source={animation}
+          autoPlay
+          loop={false}
+          speed={0.75}  // Slows down the animation by 25%
+          style={{ 
+            width: 100, 
+            height: 100, 
+            position: 'absolute', 
+            right: 30, // Adjust this value to shift it further right
+            top: '50%', 
+            marginTop: -50 
+          }}
+        />
         </View>
 
-        <LinearGradient 
-          colors={['#2F5651', '#478B4E']} 
+        <LinearGradient
+          colors={['#2F5651', '#478B4E']}
           style={styles.gradientBackground}
         >
           <View style={styles.productCard}>
@@ -149,18 +166,18 @@ const ResultScreen = () => {
             </TouchableOpacity>
 
             {showAdditives && (
-          <View style={styles.additivesContent}>
-            {additives.length > 0 ? (
-              additives.map((additive, index) => (
-                <Text key={index} style={styles.additiveText}>
-                  {additive.code} - {additive.name}
-                </Text>
-              ))
-            ) : (
-              <Text style={styles.additiveText}>No additives found</Text>
+              <View style={styles.additivesContent}>
+                {additives.length > 0 ? (
+                  additives.map((additive, index) => (
+                    <Text key={index} style={styles.additiveText}>
+                      {additive.code} - {additive.name}
+                    </Text>
+                  ))
+                ) : (
+                  <Text style={styles.additiveText}>No additives found</Text>
+                )}
+              </View>
             )}
-          </View>
-        )}
 
 
             <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
@@ -221,11 +238,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: -10,
     marginBottom: 15,
-  },
-  additiveText: {
-    fontSize: 14,
-    color: '#2C2C2C',
-    marginBottom: 5,
   },
   titleHighlight: {
     color: '#43A047',

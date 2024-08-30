@@ -148,7 +148,7 @@ const Login = () => {
                     <CustomText style={styles.forgotPassword}>Forgot Password?</CustomText>
                     <View style={styles.signupContainer}>
                         <CustomText style={styles.signupText}>Don't have an account? </CustomText>
-                        <Link href="/SignUp" style={styles.signupLink}>Sign Up</Link>
+                        <Link href="/Disclaimer" style={styles.signupLink}>Sign Up</Link>
                     </View>
                 </ScrollView>
             </View>

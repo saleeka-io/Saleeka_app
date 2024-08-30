@@ -20,6 +20,12 @@ const AuthLayout = () => {
     }}
     />
     <Stack.Screen
+    name= "Disclaimer"
+    options={{
+    headerShown:false
+    }}
+    />
+    <Stack.Screen
     name= "login"
     options={{
     headerShown: false

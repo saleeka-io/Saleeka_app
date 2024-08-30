@@ -34,7 +34,7 @@ const BarcodeScanner = () => {
 
   // Testing barcode automatically on component mount
   // useEffect(() => {
-  //   const testBarcode = '0737628064502'; // Hardcoded barcode for testing
+  //   const testBarcode = '07376280645'; // Hardcoded barcode for testing
   //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   // }, []);
 

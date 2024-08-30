@@ -14,6 +14,7 @@ import  auth from '@react-native-firebase/auth';
 const { width, height } = Dimensions.get('window');
 import CustomText from '@/components/CustomText';
 import firestore from '@react-native-firebase/firestore';
+
 // Set up EStyleSheet
 EStyleSheet.build({ $rem: width / 380 });
 const db = firestore();
@@ -94,7 +95,6 @@ const SignUp = () => {
         try {
             // Create user with email and password
             const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
-            
             // Update user profile with display name
             if (userCredential.user) {
                 await userCredential.user.updateProfile({
