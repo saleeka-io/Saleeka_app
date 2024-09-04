@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'r
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
-
 import { useUser } from '../../context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -39,10 +38,10 @@ const BarcodeScanner = () => {
   );
 
   // Testing barcode automatically on component mount
-  // useEffect(() => {
-  //   const testBarcode = '0737628064502'; // Hardcoded barcode for testing
-  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  // }, []);
+  useEffect(() => {
+    const testBarcode = '7423'; // Hardcoded barcode for testing
+    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  }, []);
 
   const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
@@ -54,9 +53,8 @@ const BarcodeScanner = () => {
         saveScanData(data);
         const encodedProductData = encodeURIComponent(JSON.stringify(productData));
   
-        // Prevent double push
         if (navigation.canGoBack()) {
-          navigation.goBack(); // Or use router.back();
+          navigation.goBack();
         }
         
         while (router.canGoBack()) { // Pop from stack until one element is left
@@ -83,7 +81,6 @@ const BarcodeScanner = () => {
       await firestore().collection('scans').add({
         userId: user.uid,
         barcode,
-        //productData,
         timestamp: firestore.FieldValue.serverTimestamp()
       });
       console.log("Scan data saved successfully for user:", user.uid);
@@ -93,53 +90,60 @@ const BarcodeScanner = () => {
     }
   };
 
-  // Commented out to test useEffect above on line 34
-  // useEffect(() => {
-  //   // Directly simulate barcode scanning with a hardcoded barcode
-  //   fetchProductData('0737628064502').then((productData) => {
-  //     // fetchProductData('07376280645').then((productData) => { ****** Uncomment if you want to see productnotfound
-  //     if (productData) {
-  //       console.log("Ingredients:", productData.ingredients); // Log ingredients to check
-  //       const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-  //       router.push(`/ResultScreen?productData=${encodedProductData}`);
-  //     } else {
-  //       router.push(`/ProductNotFound?barcode=073762806450`);
-  //     }
-  //   });
-  // }, []);
-
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {
-      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text,additives_tags`);
+      // Attempt to fetch product data from OpenFoodFacts
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=product_name,nutriments,image_url,ingredients_text,additives_tags,additives_original_tags`);
       const data = await response.json();
+  
+      if (data.status === 1) {  // Product found in OpenFoodFacts
+        const additives = data.product?.additives_tags?.map((additive: string, index: number) => {
+          const code = additive.replace('en:', '').toUpperCase();
+          const originalTag = data.product?.additives_original_tags?.[index]?.replace('en:', '') || '';
+          const name = originalTag.split(' - ')[1] || originalTag;
+          return { code, name };
+        }) || [];
 
-      if (data.status === 0) {  // Checking if the product is not found
-        console.log('Product not found for barcode:', barcode);
-        saveScanData(barcode);
-        return null;
+        return {
+          product_name: data.product?.product_name,
+          calories: data.product?.nutriments?.energy_kcal || null,
+          protein: data.product?.nutriments?.proteins || null,
+          carbs: data.product?.nutriments?.carbohydrates || null,
+          fat: data.product?.nutriments?.fat || null,
+          image_url: data.product?.image_url || null,
+          ingredients: data.product.ingredients_text ? data.product.ingredients_text.split(', ') : null,
+          additives: additives,
+        };
+      } else {
+        console.log('Product not found in OpenFoodFacts. Checking Firestore...');
+  
+        // Check Firestore for the product
+        const productDoc = await firestore().collection('products').where('barcode', '==', barcode).get();
+  
+        if (!productDoc.empty) {  // Product found in Firestore
+          const productData = productDoc.docs[0].data();
+          console.log('Product found in Firestore:', productData);
+  
+          const rawIngredients = productData.ingredients || '';
+          const ingredients = rawIngredients.trim().split(', ');
+  
+          return {
+            product_name: productData.productName,
+            calories: productData.calories || null,
+            protein: productData.protein || null,
+            carbs: productData.carbs || null,
+            fat: productData.fat || null,
+            image_url: productData.productImageUrl || null,
+            ingredients: ingredients,
+            additives: null,  // Set to null as additives are not available in your database yet
+          };
+        } else {
+          console.log('Product not found in Firestore either.');
+          return null;
+        }
       }
-
-      const additives = data.product?.additives_tags?.map((additive: string, index: number) => {
-        const code = additive.replace('en:', '').toUpperCase();
-        const originalTag = data.product?.additives_original_tags?.[index]?.replace('en:', '') || '';
-        const name = originalTag.split(' - ')[1] || originalTag;
-        return { code, name };
-      }) || [];
-      console.log(data.product);
-
-      return {
-        product_name: data.product?.product_name,
-        calories: data.product?.nutriments?.energy_kcal || null,
-        protein: data.product?.nutriments?.proteins || null,
-        carbs: data.product?.nutriments?.carbohydrates || null,
-        fat: data.product?.nutriments?.fat || null,
-        image_url: data.product?.image_url || null,
-        ingredients: data.product.ingredients_text ? data.product.ingredients_text.split(', ') : null,
-        additives: additives,
-      };
     } catch (error) {
       console.error('Error fetching product data:', error);
-      router.replace(`/ProductNotFound?barcode=${barcode}`);
       return null;
     }
   };
