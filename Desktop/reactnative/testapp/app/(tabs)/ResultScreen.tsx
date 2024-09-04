@@ -33,7 +33,11 @@ const ResultScreen = () => {
   const { productData } = useLocalSearchParams();
   const router = useRouter();
   const fillAnimation = useRef(new Animated.Value(0)).current;
+  const fadeAnimation = useRef(new Animated.Value(0)).current;
+  const imageScaleAnimation = useRef(new Animated.Value(0.95)).current;
   const [showAdditives, setShowAdditives] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
   if (!productData) {
     return <Text>Product data not found</Text>;
@@ -74,15 +78,30 @@ const ResultScreen = () => {
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
 
   useEffect(() => {
-    // Delay the animation by 500ms
-    setTimeout(() => {
+    if (imageLoaded) {
+      // Animate image scale
+      Animated.spring(imageScaleAnimation, {
+        toValue: 1,
+        friction: 5,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+
+      // Fade in content
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+
+      // Animate rating bar fill
       Animated.timing(fillAnimation, {
         toValue: fillPercentage,
-        duration: 1500, // Increased duration for better visibility
+        duration: 1500,
         useNativeDriver: false,
       }).start();
-    }, 750);
-  }, [fillPercentage]);
+    }
+  }, [imageLoaded, fillPercentage]);
 
   const navigateToScoreScreen = () => {
     router.push('/score');
@@ -105,27 +124,32 @@ const ResultScreen = () => {
         </Text>
 
         <View style={styles.imageContainer}>
-          <Image source={{ uri: product.image_url || '' }} style={styles.productImage} />
-          <LottieView
-          source={animation}
-          autoPlay
-          loop={false}
-          speed={0.75}  // Slows down the animation by 25%
-          style={{ 
-            width: 100, 
-            height: 100, 
-            position: 'absolute', 
-            right: 30, // Adjust this value to shift it further right
-            top: '50%', 
-            marginTop: -50 
-          }}
-        />
+          <Animated.Image 
+            source={{ uri: product.image_url || '' }} 
+            style={[
+              styles.productImage,
+              {
+                transform: [{ scale: imageScaleAnimation }],
+              },
+            ]} 
+            onLoad={() => setImageLoaded(true)}
+          />
+          {imageLoaded && (
+            <LottieView
+              source={animation}
+              autoPlay
+              loop={true}
+              speed={0.75}
+              style={styles.lottieAnimation}
+            />
+          )}
         </View>
 
-        <LinearGradient
-          colors={['#2F5651', '#478B4E']}
-          style={styles.gradientBackground}
-        >
+        <Animated.View style={{ opacity: fadeAnimation }}>
+          <LinearGradient
+            colors={['#2F5651', '#478B4E']}
+            style={styles.gradientBackground}
+          >
           <View style={styles.productCard}>
             <View style={styles.productInfo}>
               <Text style={styles.label}>Product Name:</Text>
@@ -185,6 +209,7 @@ const ResultScreen = () => {
             </TouchableOpacity>
           </View>
         </LinearGradient>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -375,6 +400,20 @@ const styles = StyleSheet.create({
   ratingFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f1ede1',
+  },
+  lottieAnimation: { 
+    width: 100, 
+    height: 100, 
+    position: 'absolute', 
+    right: 30,
+    top: '50%', 
+    marginTop: -50 
   },
 });
 

@@ -126,7 +126,7 @@ const ProductNotFound = () => {
           <LottieView
             source={avocadoAnimation}
             autoPlay
-            loop={false}
+            loop={true}
             style={styles.avocadoAnimation}
           />
           <Text style={styles.thankYouText}>Thank You, your submission is being processed</Text>

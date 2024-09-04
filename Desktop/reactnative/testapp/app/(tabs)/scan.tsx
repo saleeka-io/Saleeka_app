@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter, useNavigation } from 'expo-router';
+import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 
 import { useUser } from '../../context/UserContext';
@@ -32,9 +32,15 @@ const BarcodeScanner = () => {
     }
   }, [hasPermission]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setScanned(false);
+    }, [])
+  );
+
   // Testing barcode automatically on component mount
   // useEffect(() => {
-  //   const testBarcode = '07376280645'; // Hardcoded barcode for testing
+  //   const testBarcode = '0737628064502'; // Hardcoded barcode for testing
   //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   // }, []);
 
@@ -65,6 +71,7 @@ const BarcodeScanner = () => {
       }
     }
   };
+
   
   const saveScanData = async (barcode: string) => {
     if (!user) {
