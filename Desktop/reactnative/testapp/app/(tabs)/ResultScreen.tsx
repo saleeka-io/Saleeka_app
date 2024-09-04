@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaVi
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
-
+import { Buffer } from 'buffer';
 import redXAnimation from '../../assets/lottie/RedX.json';
 import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
 import cautionAnimation from '../../assets/lottie/Caution.json';
@@ -39,8 +39,7 @@ const ResultScreen = () => {
     return <Text>Product data not found</Text>;
   }
 
-  const product: ProductData = JSON.parse(decodeURIComponent(productData as string));
-  const ingredients = product.ingredients || [];
+  const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));  const ingredients = product.ingredients || [];
   const additives = product.additives || [];
 
   const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients.filter((ingredient) =>

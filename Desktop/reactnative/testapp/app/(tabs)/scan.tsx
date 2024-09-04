@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'r
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
-
+import { Buffer } from 'buffer';
 import { useUser } from '../../context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -32,11 +32,11 @@ const BarcodeScanner = () => {
     }
   }, [hasPermission]);
 
-  // Testing barcode automatically on component mount
-  // useEffect(() => {
-  //   const testBarcode = '07376280645'; // Hardcoded barcode for testing
-  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  // }, []);
+  //Testing barcode automatically on component mount
+  useEffect(() => {
+    const testBarcode = '096619331161'; // Hardcoded barcode for testing
+    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  }, []);
 
   const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
@@ -46,8 +46,7 @@ const BarcodeScanner = () => {
   
       if (productData) {
         saveScanData(data);
-        const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-  
+        const encodedProductData = Buffer.from(JSON.stringify(productData)).toString('base64');
         // Prevent double push
         if (navigation.canGoBack()) {
           navigation.goBack(); // Or use router.back();
@@ -85,21 +84,31 @@ const BarcodeScanner = () => {
       Alert.alert("Database Error", "Failed to save scan data.");
     }
   };
+//   const barcode = '080503190204';
+//   const sanitizeBarcode = (barcode: string): string => {
+//     // Allow only alphanumeric characters and basic punctuation
+//     return barcode.replace(/[^a-zA-Z0-9-_.~]/g, '');
+//   };
+  
 
-  // Commented out to test useEffect above on line 34
-  // useEffect(() => {
-  //   // Directly simulate barcode scanning with a hardcoded barcode
-  //   fetchProductData('0737628064502').then((productData) => {
-  //     // fetchProductData('07376280645').then((productData) => { ****** Uncomment if you want to see productnotfound
-  //     if (productData) {
-  //       console.log("Ingredients:", productData.ingredients); // Log ingredients to check
-  //       const encodedProductData = encodeURIComponent(JSON.stringify(productData));
-  //       router.push(`/ResultScreen?productData=${encodedProductData}`);
-  //     } else {
-  //       router.push(`/ProductNotFound?barcode=073762806450`);
-  //     }
-  //   });
-  // }, []);
+// // Commented out to test useEffect above on line 34
+// useEffect(() => {
+//   // Sanitize the barcode before processing
+//   const sanitizedBarcode = sanitizeBarcode(barcode);
+
+//   // Directly simulate barcode scanning with a hardcoded barcode
+//   fetchProductData(sanitizedBarcode).then((productData) => {
+//     // Uncomment if you want to see productnotfound
+//     // fetchProductData('07376280645').then((productData) => { 
+//     if (productData) {
+//       console.log("Ingredients:", productData.ingredients); // Log ingredients to check
+//       const encodedProductData = encodeURIComponent(JSON.stringify(productData));
+//       router.push(`/ResultScreen?productData=${encodedProductData}`);
+//     } else {
+//       router.push(`/ProductNotFound?barcode=${sanitizedBarcode}`);
+//     }
+//   });
+// }, []);
 
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     try {

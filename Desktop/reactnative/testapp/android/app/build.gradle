@@ -109,13 +109,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.testapp'
+    namespace 'com.Saleeka.testapp'
     defaultConfig {
-        applicationId 'com.anonymous.testapp'
+        applicationId 'com.Saleeka.testapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "4.0.0"
     }
     signingConfigs {
         debug {

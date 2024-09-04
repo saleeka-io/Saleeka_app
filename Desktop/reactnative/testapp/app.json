@@ -15,26 +15,22 @@
     "ios": {
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow you to upload profile pictures and other media."
-       },
-
+      },
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
-      "bundleIdentifier": "com.anonymous.testapp"
+      "bundleIdentifier": "com.Saleeka.testapp"
     },
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-       
         "backgroundColor": "#ffffff"
       },
-      
-    
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.anonymous.testapp"
+      "package": "com.Saleeka.testapp"
     },
     "web": {
       "bundler": "metro",
@@ -56,6 +52,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "3b979bc2-cfc2-4442-9119-644c23882210"
+      }
     }
   }
 }

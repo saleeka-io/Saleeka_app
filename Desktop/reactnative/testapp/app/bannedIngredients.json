@@ -97,6 +97,19 @@
         "severity": "yellow"
       },
       {
+        "name": "Vegetable Oil",
+        "casNumber": "Various",
+        "reason": "Linked to inflammation and other health concerns, particularly when heated at high temperatures or consumed in excess",
+        "severity": "yellow"
+      },
+      {
+        "name": "Vegetable Oils in Varying Quantities",
+        "casNumber": "Various",
+        "reason": "High in omega-6 fatty acids, which can contribute to inflammation when consumed in excess, particularly in processed foods",
+        "severity": "yellow"
+      },
+    
+      {
         "name": "Corn Oil",
         "casNumber": "8001-30-7",
         "reason": "Linked to inflammation and other health concerns",
