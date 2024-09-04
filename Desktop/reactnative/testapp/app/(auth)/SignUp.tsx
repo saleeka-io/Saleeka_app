@@ -1,270 +1,331 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StatusBar, StyleSheet, ImageBackground, Dimensions, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Image,
+  StyleSheet,
+  Dimensions,
+  Keyboard,
+  Animated,
+  TouchableWithoutFeedback,
+  TextInput,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import EStyleSheet from 'react-native-extended-stylesheet';
-import Svg, { Path } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 import { images } from '../../constants';
-import FormField from '../../components/FormField';
-import CustomButton from '../../components/button';
-//import { app} from '../../firebase/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { router } from 'expo-router';
-import  auth from '@react-native-firebase/auth';
-const { width, height } = Dimensions.get('window');
 import CustomText from '@/components/CustomText';
+import CustomButton from '../../components/button';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-// Set up EStyleSheet
-EStyleSheet.build({ $rem: width / 380 });
-const db = firestore();
+const { width, height } = Dimensions.get('window');
+
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
+
 const SignUp = () => {
-    const [form, setForm] = useState({
-        username: '',
-        password: '',
-        email: ''
-    });
-    const [errors, setErrors] = useState({
-        username: '',
-        password: '',
-        email: ''
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('')
+  const [form, setForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // New state for password visibility
+  const [formOpacity] = useState(new Animated.Value(0));
 
-    const validateUsername = (username: string) => {
-        if (!/^[A-Za-z]+$/.test(username)) {
-            setErrors(prev => ({ ...prev, username: 'Username must contain only A-Z characters' }));
-        } else {
-            setErrors(prev => ({ ...prev, username: '' }));
+  useEffect(() => {
+    Animated.timing(formOpacity, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const validateUsername = (username: string) => {
+    if (!/^[A-Za-z]+$/.test(username)) {
+      setErrors(prev => ({ ...prev, username: 'Username must contain only A-Z characters' }));
+    } else {
+      setErrors(prev => ({ ...prev, username: '' }));
+    }
+  };
+
+  const validatePassword = (password: string) => {
+    if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*]/.test(password)) {
+      setErrors(prev => ({ ...prev, password: 'Password must be 8+ characters with at least one number and special character' }));
+    } else {
+      setErrors(prev => ({ ...prev, password: '' }));
+    }
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+    } else {
+      setErrors(prev => ({ ...prev, email: '' }));
+    }
+  };
+
+  const handleUsernameChange = (text: string) => {
+    setForm(prevForm => ({ ...prevForm, username: text }));
+    validateUsername(text);
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setForm(prevForm => ({ ...prevForm, password: text }));
+    validatePassword(text);
+  };
+
+  const handleEmailChange = (text: string) => {
+    setForm(prevForm => ({ ...prevForm, email: text }));
+    validateEmail(text);
+  };
+
+  const handleSignUp = async () => {
+    setIsSubmitting(true);
+    if (!errors.username && !errors.email && !errors.password) {
+      try {
+        const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
+        if (userCredential.user) {
+          await userCredential.user.updateProfile({
+            displayName: form.username
+          });
+          const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+          await userRef.set({
+            username: form.username,
+            email: form.email
+          });
+          while (router.canGoBack()) {
+            router.back();
+          }
+          router.replace('/scan');
         }
-    };
+      } catch (err) {
+        console.error(err);
+        setError('Error creating account. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setError('Please fix the errors before submitting.');
+      setIsSubmitting(false);
+    }
+  };
 
-    const validatePassword = (password: string) => {
-        if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*]/.test(password)) {
-            setErrors(prev => ({ ...prev, password: 'Password must be 8+ characters with at least one number and special character' }));
-        } else {
-            setErrors(prev => ({ ...prev, password: '' }));
-        }
-    };
-
-    const validateEmail = (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
-        } else {
-            setErrors(prev => ({ ...prev, email: '' }));
-        }
-    };
-
-    const handleUsernameChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, username: text }));
-        validateUsername(text);
-    };
-
-    const handlePasswordChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, password: text }));
-        validatePassword(text);
-    };
-
-    const handleEmailChange = (text: string) => {
-        setForm(prevForm => ({ ...prevForm, email: text }));
-        validateEmail(text);
-    };
-
-    // const createUser = async () => {
-    //     setIsSubmitting(true);
-    //     try {
-    //         const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-    //         const user = userCredential.user;
-    //         await updateProfile(user, { displayName: form.username });
-    //         console.log('User created and updated:', user);
-    //         // Handle post-signup logic here, like navigating to another screen
-    //         router.replace('/login');
-    //     } catch (error) {
-    //         if (typeof error === "object" && error !== null && "message" in error) {
-    //             console.error('Error signing up:', error.message);
-    //         } else {
-    //             console.error('An unexpected error occurred:', error);
-    //         }
-    //     }
-    //     setIsSubmitting(false);
-    // };
-    const createUser = async () => {
-        setIsSubmitting(true);
-        try {
-            // Create user with email and password
-            const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
-            // Update user profile with display name
-            if (userCredential.user) {
-                await userCredential.user.updateProfile({
-                    displayName: form.username
-                });
-                console.log('User created and updated:', userCredential.user);
-    
-                // Add user to Firestore
-                const userRef = db.collection('Users').doc(userCredential.user.uid);
-                await userRef.set({
-                    username: form.username,
-                    email: form.email
-                });
-                console.log('User added to Firestore:', userCredential.user.uid);
-            }
-    
-            // Handle post-signup logic here, like navigating to another screen
-            router.replace('/login');  // Make sure you adapt this to your navigation solution
-        } catch (error) {
-            if (error instanceof Error) {
-                console.error('Error signing up:', error.message);
-                setError(error.message);
-            } else {
-                console.error('An unexpected error occurred:', error);
-                setError('An unexpected error occurred.');
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    // Calculate logo position based on screen height
-    const logoTopPosition = height < 700 ? height * 0.05 : height * 0.1;
-    const isSmallScreen = height < 700;
-
-    return (
-        <View style={styles.container}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-            <ImageBackground
-                source={images.bgImage}
-                style={styles.backgroundImage}
-                resizeMode="cover"
-            >
-                <SafeAreaView style={styles.safeArea}>
-                    <Image
-                        style={[styles.logo, { top: logoTopPosition }]}
-                        source={images.logo}
-                        resizeMode="contain"
-                    />
-                </SafeAreaView>
-                <Svg
-                    height={height}
-                    width={width}
-                    viewBox={`0 0 ${width} ${height}`}
-                    style={styles.svgContainer}
-                >
-                    <Path
-                        d={`M0,${height * 0.42} Q${width / 2},${height * 0.42 - 80} ${width},${height * 0.42} V${height} H0 Z`}
-                        fill="#3A6A64"
-                    />
-                    <Path
-                        d={`M0,${height * 0.42 + 40} Q${width / 2},${height * 0.42 + 60 - 100} ${width},${height * 0.42 + 45} V${height} H0 Z`}
-                        fill="#2F5651"
-                    />
-                </Svg>
-            </ImageBackground>
-            <View style={styles.textSection}>
-                <ScrollView 
-                    contentContainerStyle={[
-                        styles.contentContainer, 
-                        { marginTop: height * 0.43, paddingBottom: isSmallScreen ? 20 : 40 }
-                    ]}
-                >
-                    <CustomText style={styles.loginTitle} fontWeight='semiBold'>Sign Up</CustomText>
-                    <CustomText style={styles.loginSubtitle}>Create your account</CustomText>
-                    <FormField title="Username" placeholder='Username' value={form.username} handleChangeText={handleUsernameChange} keyboardType="default" />
-                    {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
-                    <FormField title="Email" placeholder='Email' value={form.email} handleChangeText={handleEmailChange} keyboardType="email-address" />
-                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-                    <FormField title="Password" value={form.password} handleChangeText={handlePasswordChange} keyboardType="default" placeholder='Password' />
-                    {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-                    <CustomButton title="Sign Up" handlePress={createUser} isLoading={isSubmitting} />
-                    <CustomText style={styles.forgotPassword}></CustomText>
-                    <View 
-                        style={[
-                            styles.signupContainer, 
-                            { marginTop: isSmallScreen ? 10 : 20 } // Adjust margin for small screens
-                        ]}
-                    >
-                        <CustomText style={styles.signupText}>Have an account already? </CustomText>
-                        <Link href="/login" style={styles.signupLink}>Login</Link>
-                    </View>
-                </ScrollView>
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <AnimatedLinearGradient
+        colors={['#3A6A64', '#2F5651']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerContainer}>
+            <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+            <CustomText style={styles.title}>Create Account</CustomText>
+          </View>
+          <Animated.View style={[styles.formContainer, { opacity: formOpacity }]}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="person-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={form.username}
+                onChangeText={handleUsernameChange}
+                placeholder="Username"
+                placeholderTextColor="#A0AEC0"
+                autoCapitalize="none"
+              />
             </View>
-        </View>
-    );
+            {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={form.email}
+                onChangeText={handleEmailChange}
+                placeholder="Email"
+                placeholderTextColor="#A0AEC0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={form.password}
+                onChangeText={handlePasswordChange}
+                placeholder="Password"
+                placeholderTextColor="#A0AEC0"
+                secureTextEntry={!isPasswordVisible} // Toggle secureTextEntry based on isPasswordVisible
+              />
+              <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+                <Ionicons
+                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                  size={24}
+                  color="#FFFFFF"
+                  style={styles.passwordIcon}
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+            {error ? <CustomText style={styles.errorText}>{error}</CustomText> : null}
+            <CustomButton
+              title="Sign Up"
+              handlePress={handleSignUp}
+              isLoading={isSubmitting}
+              style={styles.signUpButton}
+            />
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <CustomText style={styles.dividerText}>OR</CustomText>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity style={styles.socialButton}>
+              <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
+              <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.socialButton}>
+              <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
+              <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
+            </TouchableOpacity>
+          </Animated.View>
+          <View style={styles.loginContainer}>
+            <CustomText style={styles.loginText}>Already have an account? </CustomText>
+            <Link href="/login" style={styles.loginLink}>
+              <CustomText style={styles.loginLinkText}>Log In</CustomText>
+            </Link>
+          </View>
+        </SafeAreaView>
+      </AnimatedLinearGradient>
+    </TouchableWithoutFeedback>
+  );
 };
 
-const styles = EStyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    backgroundImage: {
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-    },
-    safeArea: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logo: {
-        width: width * 0.5,
-        height: width * 0.5,
-        position: 'absolute',
-    },
-    svgContainer: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-    },
-    textSection: {
-        flex: 1,
-        padding: '20rem',
-    },
-    contentContainer: {
-        flexGrow: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    loginTitle: {
-        color: '#FFF',
-        fontSize: '24rem',
-        marginBottom: '10rem',
-    },
-    loginSubtitle: {
-        color: '#FFF',
-        fontSize: '16rem',
-        marginBottom: '15rem',
-    },
-    forgotPassword: {
-        color: '#FFF',
-        fontSize: '16rem',
-        marginTop: '20rem',
-    },
-    signupContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: '10rem',  // Reduced margin top for small screens
-    },
-    signupText: {
-        color: '#FFF',
-        fontSize: '16rem',
-        marginTop: -40,
-    },
-    signupLink: {
-        color: '#FFF',
-        fontSize: '16rem',
-        textDecorationLine: 'underline',
-        marginTop: -40,
-    },
-    errorText: {
-        color: 'red',
-        fontSize: '12rem',
-        marginTop: '-16rem',
-        marginLeft: '18rem',
-        marginRight: '18rem',
-    },
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 50,
+  },
+  logo: {
+    width: width * 0.3,
+    height: width * 0.3,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: -80,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    position: 'relative', // Ensure proper positioning for the eye icon
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    paddingVertical: 10,
+  },
+  passwordIcon: {
+    marginLeft: 10,
+  },
+  signUpButton: {
+    width: '100%',
+    marginTop: 20,
+    borderRadius: 25,
+  },
+  errorText: {
+    color: '#FFA500',
+    marginBottom: 10,
+    alignSelf: 'flex-start',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dividerText: {
+    color: '#FFFFFF',
+    paddingHorizontal: 10,
+    fontSize: 14,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 15,
+  },
+  socialIcon: {
+    marginRight: 10,
+  },
+  socialButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  loginText: {
+    color: '#FFFFFF',
+  },
+  loginLink: {
+    marginLeft: 5,
+  },
+  loginLinkText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
 });
 
 export default SignUp;

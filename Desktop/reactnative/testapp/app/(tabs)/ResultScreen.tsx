@@ -33,13 +33,20 @@ const ResultScreen = () => {
   const { productData } = useLocalSearchParams();
   const router = useRouter();
   const fillAnimation = useRef(new Animated.Value(0)).current;
+  const fadeAnimation = useRef(new Animated.Value(0)).current;
+  const imageScaleAnimation = useRef(new Animated.Value(0.95)).current;
   const [showAdditives, setShowAdditives] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
   if (!productData) {
     return <Text>Product data not found</Text>;
   }
 
   const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));  const ingredients = product.ingredients || [];
+  const encodedImageUrl = product.image_url ? product.image_url.replace('/products/', '/products%2F') : '';
+  console.log('Product Data:', product);
+
   const additives = product.additives || [];
 
   const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
@@ -73,15 +80,27 @@ const ResultScreen = () => {
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
 
   useEffect(() => {
-    // Delay the animation by 500ms
-    setTimeout(() => {
+    if (imageLoaded) {
+      Animated.spring(imageScaleAnimation, {
+        toValue: 1,
+        friction: 5,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+
       Animated.timing(fillAnimation, {
         toValue: fillPercentage,
-        duration: 1500, // Increased duration for better visibility
+        duration: 1500,
         useNativeDriver: false,
       }).start();
-    }, 750);
-  }, [fillPercentage]);
+    }
+  }, [imageLoaded, fillPercentage]);
 
   const navigateToScoreScreen = () => {
     router.push('/score');
@@ -104,86 +123,99 @@ const ResultScreen = () => {
         </Text>
 
         <View style={styles.imageContainer}>
-          <Image source={{ uri: product.image_url || '' }} style={styles.productImage} />
-          <LottieView
-          source={animation}
-          autoPlay
-          loop={false}
-          speed={0.75}  // Slows down the animation by 25%
-          style={{ 
-            width: 100, 
-            height: 100, 
-            position: 'absolute', 
-            right: 30, // Adjust this value to shift it further right
-            top: '50%', 
-            marginTop: -50 
-          }}
-        />
+          <Animated.Image 
+            source={{ uri: encodedImageUrl || '' }}
+            onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+            style={[
+              styles.productImage,
+              {
+                transform: [{ scale: imageScaleAnimation }],
+              },
+            ]} 
+            onLoad={() => setImageLoaded(true)}
+          />
+          {imageLoaded && (
+            <LottieView
+              source={animation}
+              autoPlay
+              loop={true}
+              speed={0.75}
+              style={styles.lottieAnimation}
+            />
+          )}
         </View>
 
-        <LinearGradient
-          colors={['#2F5651', '#478B4E']}
-          style={styles.gradientBackground}
-        >
-          <View style={styles.productCard}>
-            <View style={styles.productInfo}>
-              <Text style={styles.label}>Product Name:</Text>
-              <Text style={styles.productName}>{product.product_name}</Text>
-            </View>
+        <Animated.View style={[styles.gradientContainer, { opacity: fadeAnimation }]}>
+          <LinearGradient
+            colors={['#2F5651', '#478B4E']}
+            style={styles.gradientBackground}
+          >
+            <View style={styles.productCard}>
+              <View style={styles.productInfo}>
+                <Text style={styles.label}>Product Name:</Text>
+                <Text style={styles.productName}>{product.product_name}</Text>
+              </View>
 
-            <View style={styles.ratingBar}>
-              <View style={styles.ratingRow}>
-                <View style={styles.ratingIndicator}>
-                  <Animated.View style={[styles.ratingFill, { width, backgroundColor: color }]} />
+              <View style={styles.ratingBar}>
+                <View style={styles.ratingRow}>
+                  <View style={styles.ratingIndicator}>
+                    <Animated.View style={[styles.ratingFill, { width, backgroundColor: color }]} />
+                  </View>
+                  <Text style={[styles.rating, { color }]}>Product Rating: {rating}</Text>
                 </View>
-                <Text style={[styles.rating, { color }]}>Product Rating: {rating}</Text>
               </View>
-            </View>
 
-            {bannedIngredients.length > 0 && (
-              <View style={styles.warningSection}>
-                <Text style={styles.warningTitle}>Warning! This product contains:</Text>
-                {bannedIngredients.map((ingredient) => (
-                  <Text key={ingredient.name} style={styles.warningText}>
-                    {ingredient.name} ({ingredient.reason})
-                  </Text>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.nutritionalInfo}>
-              <Text style={styles.nutritionalTitle}>Per Serving:</Text>
-              <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories ? product.calories.toFixed(1) : 'N/A'}</Text>
-              <Text style={styles.nutritionalText}>Protein: {product.protein ? product.protein.toFixed(1) : 'N/A'}g</Text>
-              <Text style={styles.nutritionalText}>Carbs: {product.carbs ? product.carbs.toFixed(1) : 'N/A'}g</Text>
-              <Text style={styles.nutritionalText}>Fats: {product.fat ? product.fat.toFixed(1) : 'N/A'}g</Text>
-            </View>
-
-            <TouchableOpacity style={styles.section} onPress={toggleAdditives}>
-              <Text style={styles.sectionTitle}>Additives</Text>
-              <Ionicons name={showAdditives ? "chevron-up" : "chevron-down"} size={24} color="#2C2C2C" />
-            </TouchableOpacity>
-
-            {showAdditives && (
-              <View style={styles.additivesContent}>
-                {additives.length > 0 ? (
-                  additives.map((additive, index) => (
-                    <Text key={index} style={styles.additiveText}>
-                      {additive.code} - {additive.name}
+              {bannedIngredients.length > 0 ? (
+                <View style={styles.warningSection}>
+                  <Text style={styles.warningTitle}>Warning! This product contains:</Text>
+                  {bannedIngredients.map((ingredient) => (
+                    <Text key={ingredient.name} style={styles.warningText}>
+                      {ingredient.name} ({ingredient.reason})
                     </Text>
-                  ))
-                ) : (
-                  <Text style={styles.additiveText}>No additives found</Text>
-                )}
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.excellentSection}>
+                  <Text style={styles.excellentTitle}>Excellent Choice!</Text>
+                  <Text style={styles.excellentText}>
+                    This product doesn't contain any harmful ingredients from our database.
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.nutritionalInfo}>
+                <Text style={styles.nutritionalTitle}>Per Serving:</Text>
+                <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories ? product.calories.toFixed(1) : 'N/A'}</Text>
+                <Text style={styles.nutritionalText}>Protein: {product.protein ? product.protein.toFixed(1) : 'N/A'}g</Text>
+                <Text style={styles.nutritionalText}>Carbs: {product.carbs ? product.carbs.toFixed(1) : 'N/A'}g</Text>
+                <Text style={styles.nutritionalText}>Fats: {product.fat ? product.fat.toFixed(1) : 'N/A'}g</Text>
               </View>
-            )}
 
+              <TouchableOpacity style={styles.section} onPress={toggleAdditives}>
+                <Text style={styles.sectionTitle}>Additives</Text>
+                <Ionicons name={showAdditives ? "chevron-up" : "chevron-down"} size={24} color="#2C2C2C" />
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
-              <Text style={styles.healthScoreText}>View Health Score Scale</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+              {showAdditives && (
+                <View style={styles.additivesContent}>
+                  {additives.length > 0 ? (
+                    additives.map((additive, index) => (
+                      <Text key={index} style={styles.additiveText}>
+                        {additive.code} - {additive.name}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text style={styles.additiveText}>No additives found</Text>
+                  )}
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
+                <Text style={styles.healthScoreText}>View Health Score Scale</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -197,16 +229,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  additivesTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#2C2C2C',
-  },
-  additiveText: {
-    fontSize: 14,
-    color: '#2C2C2C',
-    marginBottom: 5,
+  gradientContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 22,
@@ -216,36 +240,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
-  section: {
-    backgroundColor: '#E8F5E9',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 0,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
-  },
-  additivesContent: {
-    backgroundColor: '#E8F5E9',
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    padding: 16,
-    marginTop: -10,
-    marginBottom: 15,
-  },
   titleHighlight: {
     color: '#43A047',
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
-    marginBottom: -20,
   },
   imageContainer: {
     alignItems: 'center',
@@ -259,24 +255,13 @@ const styles = StyleSheet.create({
     height: 200,
     resizeMode: 'contain',
   },
-  iconContainer: {
-    position: 'absolute',
-    right: 60,
-    top: '50%',
-    marginTop: -20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 80,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 2,
+  lottieAnimation: { 
+    width: 100, 
+    height: 100, 
+    position: 'absolute', 
+    right: 30,
+    top: '50%', 
+    marginTop: -50 
   },
   gradientBackground: {
     flex: 1,
@@ -284,9 +269,11 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    minHeight: 500, // Add this line to ensure minimum height
   },
   productCard: {
     padding: 16,
+    flex: 1, // Add this line to make the card expand
   },
   productInfo: {
     marginBottom: 10,
@@ -299,57 +286,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
-  },
-  warningSection: {
-    marginBottom: 15,
-    backgroundColor: '#FFEBEE',
-    padding: 10,
-    borderRadius: 10,
-  },
-  warningTitle: {
-    fontWeight: 'bold',
-    color: '#D32F2F',
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  warningText: {
-    color: '#D32F2F',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  learnMore: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    marginBottom: 5,
-  },
-  nutritionalInfo: {
-    backgroundColor: '#F1F8E9',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15,
-  },
-  nutritionalTitle: {
-    color: '#2C2C2C',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  nutritionalText: {
-    color: '#2C2C2C',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  healthScoreButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 25,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  healthScoreText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   ratingBar: {
     marginBottom: 10,
@@ -374,6 +310,95 @@ const styles = StyleSheet.create({
   ratingFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  warningSection: {
+    marginBottom: 15,
+    backgroundColor: '#FFEBEE',
+    padding: 10,
+    borderRadius: 10,
+  },
+  warningTitle: {
+    fontWeight: 'bold',
+    color: '#D32F2F',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  warningText: {
+    color: '#D32F2F',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  excellentSection: {
+    marginBottom: 15,
+    backgroundColor: '#E8F5E9',
+    padding: 10,
+    borderRadius: 10,
+  },
+  excellentTitle: {
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  excellentText: {
+    color: '#2C2C2C',
+    fontSize: 14,
+  },
+  nutritionalInfo: {
+    backgroundColor: '#F1F8E9',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
+  },
+  nutritionalTitle: {
+    color: '#2C2C2C',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  nutritionalText: {
+    color: '#2C2C2C',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  section: {
+    backgroundColor: '#E8F5E9',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 0,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
+  },
+  additivesContent: {
+    backgroundColor: '#E8F5E9',
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    padding: 16,
+    marginTop: -10,
+    marginBottom: 15,
+  },
+  additiveText: {
+    fontSize: 14,
+    color: '#2C2C2C',
+    marginBottom: 5,
+  },
+  healthScoreButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 25,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  healthScoreText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

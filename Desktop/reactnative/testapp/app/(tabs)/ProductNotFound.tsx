@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView, Platform } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,6 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 
 import avocadoAnimation from '../../assets/lottie/Avocado.json';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+import { useUser } from '../../context/UserContext';
 
 const ProductNotFound = () => {
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
@@ -14,8 +17,9 @@ const ProductNotFound = () => {
   const [productImage, setProductImage] = useState<string | null>(null);
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     console.log('Received Barcode:', barcode);
@@ -27,6 +31,23 @@ const ProductNotFound = () => {
 
     requestPermission();
   }, [barcode]);
+
+  const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
+    if (!uri) return null;
+  
+    const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+    const storageRef = storage().ref(imageName);
+    
+    try {
+      await storageRef.putFile(uploadUri);
+      const downloadURL = await storageRef.getDownloadURL();
+      console.log("Uploaded Image URL:", downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
+  };
 
   const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (cameraPermission === null) {
@@ -49,12 +70,77 @@ const ProductNotFound = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting:', { barcodeState, productImage, ingredientsImage });
-    setSubmitted(true);
-    setTimeout(() => {
-      router.push('/scan');
-    }, 4000); // Adjust this timing based on the animation duration
+  const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const handleImageSelection = (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+    Alert.alert(
+      "Select Image Source",
+      "Choose the source for your image",
+      [
+        {
+          text: "Camera",
+          onPress: () => takePhoto(setImage)
+        },
+        {
+          text: "Photo Library",
+          onPress: () => pickImage(setImage)
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
+      ]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!barcodeState || !productImage || !ingredientsImage) {
+      Alert.alert('Missing Information', 'Please provide all required information before submitting.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const productImageUrl = await uploadImage(productImage, `products/${barcodeState}_front.jpg`);
+      const ingredientsImageUrl = await uploadImage(ingredientsImage, `products/${barcodeState}_ingredients.jpg`);
+
+      if (!productImageUrl || !ingredientsImageUrl) {
+        throw new Error('Failed to upload images');
+      }
+
+      await firestore().collection('products').add({
+        userId: user?.uid,
+        barcode: barcodeState,
+        productImageUrl,
+        ingredientsImageUrl,
+        productName: "to be added",
+        ingredients: "to be added",
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+
+      Alert.alert(
+        'Submission Successful',
+        'Thank you for submitting the product information.',
+        [{ text: 'OK', onPress: () => router.push('/scan') }]
+      );
+    } catch (error) {
+      console.error('Error during submission:', error);
+      Alert.alert('Submission Failed', 'There was an error submitting the product information. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cameraPermission === null) {
@@ -74,7 +160,7 @@ const ProductNotFound = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {!submitted ? (
+      {!isSubmitting ? (
         <View style={styles.content}>
           <Image
             source={require('../../assets/images/logo.png')}
@@ -95,22 +181,22 @@ const ProductNotFound = () => {
           />
 
           <View style={styles.photoContainer}>
-            <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setProductImage)}>
+            <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
               {productImage ? (
                 <Image source={{ uri: productImage }} style={styles.takenPhoto} />
               ) : (
                 <>
-                  <Ionicons name="camera" size={32} color="#fff" />
+                  <Ionicons name="images" size={32} color="#fff" />
                   <Text style={styles.photoText}>Front of Product</Text>
                 </>
               )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.photoButton} onPress={() => takePhoto(setIngredientsImage)}>
+            <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setIngredientsImage)}>
               {ingredientsImage ? (
                 <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
               ) : (
                 <>
-                  <Ionicons name="camera" size={32} color="#fff" />
+                  <Ionicons name="images" size={32} color="#fff" />
                   <Text style={styles.photoText}>Image of Ingredients</Text>
                 </>
               )}
@@ -126,7 +212,7 @@ const ProductNotFound = () => {
           <LottieView
             source={avocadoAnimation}
             autoPlay
-            loop={false}
+            loop={true}
             style={styles.avocadoAnimation}
           />
           <Text style={styles.thankYouText}>Thank You, your submission is being processed</Text>
@@ -135,7 +221,6 @@ const ProductNotFound = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -228,6 +313,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
     textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#f1ede1',
+    padding: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  text: {
+    color: '#3A6A64',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
