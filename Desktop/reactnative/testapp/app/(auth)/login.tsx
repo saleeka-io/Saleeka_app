@@ -125,9 +125,11 @@ const Login = () => {
               isLoading={isSubmitting}
               style={styles.loginButton}
             />
+            <Link href="/ForgotPassword" asChild>
             <TouchableOpacity>
               <CustomText style={styles.forgotPassword}>Forgot Password?</CustomText>
             </TouchableOpacity>
+          </Link>
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />

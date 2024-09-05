@@ -27,6 +27,12 @@ const Profile = () => {
     }
   };
 
+  const handleHistoryPress = (route: string) => {
+    if(route === 'history-screen'){
+      router.push('/HistoryScreen')
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -47,7 +53,7 @@ const Profile = () => {
       </View>
 
       <View style={styles.section}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleHistoryPress('history-screen')}>
           <Ionicons name="calendar-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Scan History</Text>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />

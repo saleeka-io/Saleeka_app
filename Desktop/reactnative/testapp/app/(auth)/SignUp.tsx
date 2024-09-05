@@ -10,6 +10,9 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -39,7 +42,7 @@ const SignUp = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // New state for password visibility
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formOpacity] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -128,86 +131,102 @@ const SignUp = () => {
         style={styles.gradient}
       >
         <SafeAreaView style={styles.safeArea}>
-          <View style={styles.headerContainer}>
-            <Image source={images.logo} style={styles.logo} resizeMode="contain" />
-            <CustomText style={styles.title}>Create Account</CustomText>
-          </View>
-          <Animated.View style={[styles.formContainer, { opacity: formOpacity }]}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={form.username}
-                onChangeText={handleUsernameChange}
-                placeholder="Username"
-                placeholderTextColor="#A0AEC0"
-                autoCapitalize="none"
-              />
-            </View>
-            {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={form.email}
-                onChangeText={handleEmailChange}
-                placeholder="Email"
-                placeholderTextColor="#A0AEC0"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={form.password}
-                onChangeText={handlePasswordChange}
-                placeholder="Password"
-                placeholderTextColor="#A0AEC0"
-                secureTextEntry={!isPasswordVisible} // Toggle secureTextEntry based on isPasswordVisible
-              />
-              <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-                <Ionicons
-                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
-                  size={24}
-                  color="#FFFFFF"
-                  style={styles.passwordIcon}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollViewContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.headerContainer}>
+                <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+                <CustomText style={styles.title}>Create Account</CustomText>
+              </View>
+              <Animated.View style={[styles.formContainer, { opacity: formOpacity }]}>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={form.username}
+                      onChangeText={handleUsernameChange}
+                      placeholder="Username"
+                      placeholderTextColor="#A0AEC0"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <Text style={styles.errorText}>{errors.username}</Text>
+                </View>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={form.email}
+                      onChangeText={handleEmailChange}
+                      placeholder="Email"
+                      placeholderTextColor="#A0AEC0"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <Text style={styles.errorText}>{errors.email}</Text>
+                </View>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={form.password}
+                      onChangeText={handlePasswordChange}
+                      placeholder="Password"
+                      placeholderTextColor="#A0AEC0"
+                      secureTextEntry={!isPasswordVisible}
+                    />
+                    <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+                      <Ionicons
+                        name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                        size={24}
+                        color="#FFFFFF"
+                        style={styles.passwordIcon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                </View>
+                {error ? <CustomText style={styles.generalErrorText}>{error}</CustomText> : null}
+                <CustomButton
+                  title="Sign Up"
+                  handlePress={handleSignUp}
+                  isLoading={isSubmitting}
+                  style={styles.signUpButton}
                 />
-              </TouchableOpacity>
-            </View>
-            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-            {error ? <CustomText style={styles.errorText}>{error}</CustomText> : null}
-            <CustomButton
-              title="Sign Up"
-              handlePress={handleSignUp}
-              isLoading={isSubmitting}
-              style={styles.signUpButton}
-            />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <CustomText style={styles.dividerText}>OR</CustomText>
-              <View style={styles.dividerLine} />
-            </View>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <CustomText style={styles.dividerText}>OR</CustomText>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
-              <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
+                  <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
+                </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
-              <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
-            </TouchableOpacity>
-          </Animated.View>
-          <View style={styles.loginContainer}>
-            <CustomText style={styles.loginText}>Already have an account? </CustomText>
-            <Link href="/login" style={styles.loginLink}>
-              <CustomText style={styles.loginLinkText}>Log In</CustomText>
-            </Link>
-          </View>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
+                  <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
+                </TouchableOpacity>
+              </Animated.View>
+              <View style={styles.loginContainer}>
+                <CustomText style={styles.loginText}>Already have an account? </CustomText>
+                <Link href="/login" style={styles.loginLink}>
+                  <CustomText style={styles.loginLinkText}>Log In</CustomText>
+                </Link>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </AnimatedLinearGradient>
     </TouchableWithoutFeedback>
@@ -220,6 +239,12 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -228,7 +253,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: 30,
   },
   logo: {
     width: width * 0.3,
@@ -243,16 +268,18 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     alignItems: 'center',
-    marginTop: -80,
+  },
+  inputWrapper: {
+    width: '100%',
+    marginBottom: 15,
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.3)',
-    position: 'relative', // Ensure proper positioning for the eye icon
+    position: 'relative',
   },
   inputIcon: {
     marginRight: 10,
@@ -266,15 +293,21 @@ const styles = StyleSheet.create({
   passwordIcon: {
     marginLeft: 10,
   },
-  signUpButton: {
-    width: '100%',
-    marginTop: 20,
-    borderRadius: 25,
-  },
   errorText: {
     color: '#FFA500',
+    fontSize: 12,
+    marginTop: 5,
+    minHeight: 15, // Ensures consistent height even when empty
+  },
+  generalErrorText: {
+    color: '#FFA500',
     marginBottom: 10,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+  },
+  signUpButton: {
+    width: '100%',
+    marginTop: 10,
+    borderRadius: 25,
   },
   divider: {
     flexDirection: 'row',

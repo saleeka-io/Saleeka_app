@@ -7,7 +7,6 @@ import { Buffer } from 'buffer';
 import redXAnimation from '../../assets/lottie/RedX.json';
 import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
 import cautionAnimation from '../../assets/lottie/Caution.json';
-
 import bannedIngredientsData from '../bannedIngredients.json';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -37,13 +36,14 @@ const ResultScreen = () => {
   const imageScaleAnimation = useRef(new Animated.Value(0.95)).current;
   const [showAdditives, setShowAdditives] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   if (!productData) {
     return <Text>Product data not found</Text>;
   }
 
-  const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));  const ingredients = product.ingredients || [];
+  const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));
+  const ingredients = product.ingredients || [];
   const encodedImageUrl = product.image_url ? product.image_url.replace('/products/', '/products%2F') : '';
   console.log('Product Data:', product);
 
@@ -80,27 +80,19 @@ const ResultScreen = () => {
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
 
   useEffect(() => {
-    if (imageLoaded) {
-      Animated.spring(imageScaleAnimation, {
-        toValue: 1,
-        friction: 5,
-        tension: 40,
-        useNativeDriver: true,
-      }).start();
+    // Always run animations for the rating regardless of image load status
+    Animated.timing(fillAnimation, {
+      toValue: fillPercentage,
+      duration: 1500,
+      useNativeDriver: false,
+    }).start();
 
-      Animated.timing(fadeAnimation, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-
-      Animated.timing(fillAnimation, {
-        toValue: fillPercentage,
-        duration: 1500,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [imageLoaded, fillPercentage]);
+    Animated.timing(fadeAnimation, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fillPercentage]);
 
   const navigateToScoreScreen = () => {
     router.push('/score');
@@ -123,18 +115,24 @@ const ResultScreen = () => {
         </Text>
 
         <View style={styles.imageContainer}>
-          <Animated.Image 
-            source={{ uri: encodedImageUrl || '' }}
-            onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
-            style={[
-              styles.productImage,
-              {
-                transform: [{ scale: imageScaleAnimation }],
-              },
-            ]} 
-            onLoad={() => setImageLoaded(true)}
-          />
-          {imageLoaded && (
+          {!imageError ? (
+            <Animated.Image
+              source={{ uri: encodedImageUrl || '' }}
+              onError={() => setImageError(true)} // Set image error state on failure
+              style={[
+                styles.productImage,
+                {
+                  transform: [{ scale: imageScaleAnimation }],
+                },
+              ]}
+              onLoad={() => setImageLoaded(true)}
+            />
+          ) : (
+            <View style={styles.imageFallbackContainer}>
+              <Ionicons name="image-outline" size={100} color="#D32F2F" />
+              <Text style={styles.imageFallbackText}>Image not found</Text>
+            </View>
+          )}
             <LottieView
               source={animation}
               autoPlay
@@ -142,7 +140,6 @@ const ResultScreen = () => {
               speed={0.75}
               style={styles.lottieAnimation}
             />
-          )}
         </View>
 
         <Animated.View style={[styles.gradientContainer, { opacity: fadeAnimation }]}>
@@ -255,13 +252,13 @@ const styles = StyleSheet.create({
     height: 200,
     resizeMode: 'contain',
   },
-  lottieAnimation: { 
-    width: 100, 
-    height: 100, 
-    position: 'absolute', 
+  lottieAnimation: {
+    width: 100,
+    height: 100,
+    position: 'absolute',
     right: 30,
-    top: '50%', 
-    marginTop: -50 
+    top: '50%',
+    marginTop: -50,
   },
   gradientBackground: {
     flex: 1,
@@ -269,11 +266,11 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    minHeight: 500, // Add this line to ensure minimum height
+    minHeight: 500,
   },
   productCard: {
     padding: 16,
-    flex: 1, // Add this line to make the card expand
+    flex: 1,
   },
   productInfo: {
     marginBottom: 10,
@@ -295,9 +292,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  rating: {
-    fontSize: 14,
-    fontWeight: 'bold',
+  imageFallbackContainer: {
+    width: 200,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    borderRadius: 10,
+  },
+  imageFallbackText: {
+    color: '#D32F2F',
+    marginTop: 10,
   },
   ratingIndicator: {
     flex: 1,
@@ -316,6 +322,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFEBEE',
     padding: 10,
     borderRadius: 10,
+  },
+  rating: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   warningTitle: {
     fontWeight: 'bold',
