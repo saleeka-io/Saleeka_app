@@ -18,8 +18,10 @@ import { images } from '../../constants';
 import CustomText from '@/components/CustomText';
 import CustomButton from '../../components/button';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,7 +30,7 @@ const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // New state for password visibility
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [formOpacity] = useState(new Animated.Value(0));
@@ -68,12 +70,66 @@ const Login = () => {
     }
   };
 
-  const handleAppleLogin = () => {
-    console.log('Apple login pressed');
-  };
-
-  const handleGoogleLogin = () => {
-    console.log('Google login pressed');
+  const handleGoogleLogin = async () => {
+    try {
+      console.log('Starting Google Sign-In process...');
+      
+      // Check if Google Services are available
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('Google Play Services are available');
+      
+      // Perform Google Sign-In
+      const signInResult: any = await GoogleSignin.signIn();
+      console.log('Google Sign-In result:', JSON.stringify(signInResult, null, 2));
+      
+      // Attempt to retrieve idToken and accessToken
+      const idToken = signInResult?.idToken || signInResult?.user?.idToken || signInResult?.data?.idToken;
+      const accessToken = signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
+  
+      if (!idToken) {
+        console.error('No idToken found in sign-in result');
+        throw new Error('Google sign-in failed: No idToken found');
+      }
+  
+      console.log('idToken successfully retrieved');
+  
+      // Create a credential using the Google ID token and access token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
+      console.log('Google credential created');
+      
+      // Sign in to Firebase with the Google credential
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      console.log('Firebase sign-in successful');
+      console.log('User UID:', userCredential.user.uid);
+  
+      // Check if the user data exists in Firestore and create it if necessary
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+          // User does not exist, so create a new document
+          await userRef.set({
+            username: userCredential.user.displayName,
+            email: userCredential.user.email,
+          });
+          console.log('User data saved to Firestore');
+        } else {
+          console.log('User already exists in Firestore');
+        }
+        
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Detailed Google Sign-In Error:', error);
+      if (error.code) {
+        console.error('Error code:', error.code);
+      }
+      if (error.message) {
+        console.error('Error message:', error.message);
+      }
+      setError('Google sign-in failed. Please try again.');
+    }
   };
 
   return (
@@ -108,7 +164,7 @@ const Login = () => {
                 onChangeText={setPassword}
                 placeholder="Password"
                 placeholderTextColor="#A0AEC0"
-                secureTextEntry={!isPasswordVisible} // Toggle secureTextEntry based on isPasswordVisible
+                secureTextEntry={!isPasswordVisible}
               />
               <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
                 <Ionicons
@@ -126,21 +182,16 @@ const Login = () => {
               style={styles.loginButton}
             />
             <Link href="/ForgotPassword" asChild>
-            <TouchableOpacity>
-              <CustomText style={styles.forgotPassword}>Forgot Password?</CustomText>
-            </TouchableOpacity>
-          </Link>
+              <TouchableOpacity>
+                <CustomText style={styles.forgotPassword}>Forgot Password?</CustomText>
+              </TouchableOpacity>
+            </Link>
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <CustomText style={styles.dividerText}>OR</CustomText>
               <View style={styles.dividerLine} />
             </View>
-
-            <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin}>
-              <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
-              <CustomText style={styles.socialButtonText}>Login with Apple</CustomText>
-            </TouchableOpacity>
 
             <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
               <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />

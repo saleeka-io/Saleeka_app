@@ -24,6 +24,8 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -124,6 +126,64 @@ const SignUp = () => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      console.log('Starting Google Sign-In process...');
+      
+      // Check if Google Services are available
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('Google Play Services are available');
+      
+      // Perform Google Sign-In
+      const signInResult: any = await GoogleSignin.signIn();
+      console.log('Google Sign-In result:', JSON.stringify(signInResult, null, 2));
+      
+      // Attempt to retrieve idToken and accessToken
+      const idToken = signInResult?.idToken || signInResult?.user?.idToken || signInResult?.data?.idToken;
+      const accessToken = signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
+  
+      if (!idToken) {
+        console.error('No idToken found in sign-in result');
+        throw new Error('Google sign-up failed: No idToken found');
+      }
+  
+      console.log('idToken successfully retrieved');
+  
+      // Create a credential using the Google ID token and access token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
+      console.log('Google credential created');
+      
+      // Sign in to Firebase with the Google credential
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      console.log('Firebase sign-in successful');
+      console.log('User UID:', userCredential.user.uid);
+  
+      // Save user data to Firestore
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        await userRef.set({
+          username: userCredential.user.displayName,
+          email: userCredential.user.email,
+        });
+        console.log('User data saved to Firestore');
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Detailed Google Sign-In Error:', error);
+      if (error.code) {
+        console.error('Error code:', error.code);
+      }
+      if (error.message) {
+        console.error('Error message:', error.message);
+      }
+      setError('Google sign-up failed. Please try again.');
+    }
+  };
+  
+  
+  
+  
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <AnimatedLinearGradient
@@ -209,12 +269,7 @@ const SignUp = () => {
                   <View style={styles.dividerLine} />
                 </View>
 
-                <TouchableOpacity style={styles.socialButton}>
-                  <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
-                  <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.socialButton}>
+                <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignUp}>
                   <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
                 </TouchableOpacity>
