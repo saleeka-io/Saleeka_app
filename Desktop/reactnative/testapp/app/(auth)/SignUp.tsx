@@ -13,6 +13,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,9 +26,9 @@ import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AppleButton, appleAuth } from '@invertase/react-native-apple-authentication';
 
-
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -57,41 +58,44 @@ const SignUp = () => {
 
   const validateUsername = (username: string) => {
     if (!/^[A-Za-z]+$/.test(username)) {
-      setErrors(prev => ({ ...prev, username: 'Username must contain only A-Z characters' }));
+      setErrors((prev) => ({ ...prev, username: 'Username must contain only A-Z characters' }));
     } else {
-      setErrors(prev => ({ ...prev, username: '' }));
+      setErrors((prev) => ({ ...prev, username: '' }));
     }
   };
 
   const validatePassword = (password: string) => {
     if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*]/.test(password)) {
-      setErrors(prev => ({ ...prev, password: 'Password must be 8+ characters with at least one number and special character' }));
+      setErrors((prev) => ({
+        ...prev,
+        password: 'Password must be 8+ characters with at least one number and special character',
+      }));
     } else {
-      setErrors(prev => ({ ...prev, password: '' }));
+      setErrors((prev) => ({ ...prev, password: '' }));
     }
   };
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address' }));
     } else {
-      setErrors(prev => ({ ...prev, email: '' }));
+      setErrors((prev) => ({ ...prev, email: '' }));
     }
   };
 
   const handleUsernameChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, username: text }));
+    setForm((prevForm) => ({ ...prevForm, username: text }));
     validateUsername(text);
   };
 
   const handlePasswordChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, password: text }));
+    setForm((prevForm) => ({ ...prevForm, password: text }));
     validatePassword(text);
   };
 
   const handleEmailChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, email: text }));
+    setForm((prevForm) => ({ ...prevForm, email: text }));
     validateEmail(text);
   };
 
@@ -102,12 +106,12 @@ const SignUp = () => {
         const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
         if (userCredential.user) {
           await userCredential.user.updateProfile({
-            displayName: form.username
+            displayName: form.username,
           });
           const userRef = firestore().collection('Users').doc(userCredential.user.uid);
           await userRef.set({
             username: form.username,
-            email: form.email
+            email: form.email,
           });
           while (router.canGoBack()) {
             router.back();
@@ -129,36 +133,31 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     try {
       console.log('Starting Google Sign-In process...');
-      
-      // Check if Google Services are available
+
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       console.log('Google Play Services are available');
-      
-      // Perform Google Sign-In
+
       const signInResult: any = await GoogleSignin.signIn();
       console.log('Google Sign-In result:', JSON.stringify(signInResult, null, 2));
-      
-      // Attempt to retrieve idToken and accessToken
+
       const idToken = signInResult?.idToken || signInResult?.user?.idToken || signInResult?.data?.idToken;
-      const accessToken = signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
-  
+      const accessToken =
+        signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
+
       if (!idToken) {
         console.error('No idToken found in sign-in result');
         throw new Error('Google sign-up failed: No idToken found');
       }
-  
+
       console.log('idToken successfully retrieved');
-  
-      // Create a credential using the Google ID token and access token
+
       const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
       console.log('Google credential created');
-      
-      // Sign in to Firebase with the Google credential
+
       const userCredential = await auth().signInWithCredential(googleCredential);
       console.log('Firebase sign-in successful');
       console.log('User UID:', userCredential.user.uid);
-  
-      // Save user data to Firestore
+
       if (userCredential.user) {
         const userRef = firestore().collection('Users').doc(userCredential.user.uid);
         await userRef.set({
@@ -179,10 +178,38 @@ const SignUp = () => {
       setError('Google sign-up failed. Please try again.');
     }
   };
-  
-  
-  
-  
+
+  const handleAppleSignUp = async () => {
+    try {
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken, nonce } = appleAuthRequestResponse;
+
+      if (!identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      const userCredential = await auth().signInWithCredential(appleCredential);
+
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        await userRef.set({
+          username: userCredential.user.displayName || 'Apple User',
+          email: userCredential.user.email,
+        });
+        console.log('User data saved to Firestore');
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Apple Sign-Up Error:', error);
+      Alert.alert('Apple Sign-Up Error', error.message);
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -192,7 +219,7 @@ const SignUp = () => {
       >
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
           >
             <ScrollView
@@ -246,7 +273,7 @@ const SignUp = () => {
                     />
                     <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
                       <Ionicons
-                        name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                        name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
                         size={24}
                         color="#FFFFFF"
                         style={styles.passwordIcon}
@@ -273,6 +300,13 @@ const SignUp = () => {
                   <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
                 </TouchableOpacity>
+
+                <AppleButton
+                  style={styles.appleButton}
+                  buttonStyle={AppleButton.Style.WHITE}
+                  buttonType={AppleButton.Type.SIGN_UP}
+                  onPress={handleAppleSignUp}
+                />
               </Animated.View>
               <View style={styles.loginContainer}>
                 <CustomText style={styles.loginText}>Already have an account? </CustomText>
@@ -397,6 +431,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginVertical: 10,
   },
   loginContainer: {
     flexDirection: 'row',

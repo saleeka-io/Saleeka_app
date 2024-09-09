@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,8 +23,9 @@ import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AppleButton, appleAuth } from '@invertase/react-native-apple-authentication';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -102,7 +104,7 @@ const Login = () => {
       console.log('Firebase sign-in successful');
       console.log('User UID:', userCredential.user.uid);
   
-      // Check if the user data exists in Firestore and create it if necessary
+      // Save user data to Firestore
       if (userCredential.user) {
         const userRef = firestore().collection('Users').doc(userCredential.user.uid);
         const userDoc = await userRef.get();
@@ -129,6 +131,50 @@ const Login = () => {
         console.error('Error message:', error.message);
       }
       setError('Google sign-in failed. Please try again.');
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      // Start the Apple sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken, nonce } = appleAuthRequestResponse;
+
+      if (!identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      // Create a Firebase credential with the token
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      // Sign in to Firebase with the Apple credential
+      const userCredential = await auth().signInWithCredential(appleCredential);
+
+      // Check if the user data exists in Firestore and create it if necessary
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+          // User does not exist, so create a new document
+          await userRef.set({
+            username: userCredential.user.displayName || 'Apple User',
+            email: userCredential.user.email,
+          });
+          console.log('User data saved to Firestore');
+        } else {
+          console.log('User already exists in Firestore');
+        }
+        
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Apple Sign-In Error:', error);
+      Alert.alert('Apple Sign-In Error', error.message);
     }
   };
 
@@ -197,6 +243,13 @@ const Login = () => {
               <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
               <CustomText style={styles.socialButtonText}>Login with Google</CustomText>
             </TouchableOpacity>
+
+            <AppleButton
+              style={styles.appleButton}
+              buttonStyle={AppleButton.Style.BLACK}
+              buttonType={AppleButton.Type.SIGN_IN}
+              onPress={handleAppleSignIn}
+            />
           </Animated.View>
           <View style={styles.signupContainer}>
             <CustomText style={styles.signupText}>Don't have an account? </CustomText>
@@ -305,6 +358,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginVertical: 10,
   },
   signupContainer: {
     flexDirection: 'row',
