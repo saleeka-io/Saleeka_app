@@ -7,7 +7,6 @@ const ComingSoon = () => {
   const router = useRouter();
 
   const handleDonation = () => {
-    // Replace with your actual donation page route
     router.push('/Donation');
   };
 

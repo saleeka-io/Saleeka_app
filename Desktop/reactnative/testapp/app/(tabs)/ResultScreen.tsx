@@ -10,6 +10,7 @@ import cautionAnimation from '../../assets/lottie/Caution.json';
 import bannedIngredientsData from '../bannedIngredients.json';
 import { Ionicons } from '@expo/vector-icons';
 
+// Define the structure of the product data
 interface ProductData {
   product_name: string;
   ingredients: string[];
@@ -21,6 +22,7 @@ interface ProductData {
   image_url: string | null;
 }
 
+// Define the structure of a banned ingredient
 interface BannedIngredient {
   name: string;
   casNumber: string;
@@ -29,32 +31,42 @@ interface BannedIngredient {
 }
 
 const ResultScreen = () => {
+  // Get the product data from the route params
   const { productData } = useLocalSearchParams();
   const router = useRouter();
+
+  // Animation references and states
   const fillAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const imageScaleAnimation = useRef(new Animated.Value(0.95)).current;
+
+  // State for UI controls
   const [showAdditives, setShowAdditives] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  // Check if product data exists
   if (!productData) {
     return <Text>Product data not found</Text>;
   }
 
+  // Parse the product data from base64 encoding
   const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));
   const ingredients = product.ingredients || [];
+  // Encode the image URL to handle special characters
   const encodedImageUrl = product.image_url ? product.image_url.replace('/products/', '/products%2F') : '';
   console.log('Product Data:', product);
 
   const additives = product.additives || [];
 
+  // Filter banned ingredients based on the product's ingredients
   const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
     ingredients.some((prodIngredient) =>
       prodIngredient.toLowerCase().includes(ingredient.name.toLowerCase())
     )
   ) as BannedIngredient[];
 
+  // Calculate the product rating based on banned ingredients
   const calculateRating = (
     bannedIngredients: BannedIngredient[]
   ): { rating: string; color: string; fillPercentage: number; animation: any } => {
@@ -79,14 +91,16 @@ const ResultScreen = () => {
 
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
 
+  // Set up animations when the component mounts
   useEffect(() => {
-    // Always run animations for the rating regardless of image load status
+    // Animate the rating bar fill
     Animated.timing(fillAnimation, {
       toValue: fillPercentage,
       duration: 1500,
       useNativeDriver: false,
     }).start();
 
+    // Fade in the content
     Animated.timing(fadeAnimation, {
       toValue: 1,
       duration: 500,
@@ -94,15 +108,18 @@ const ResultScreen = () => {
     }).start();
   }, [fillPercentage]);
 
+  // Navigation function to the score screen
   const navigateToScoreScreen = () => {
     router.push('/score');
   };
 
+  // Interpolate the width of the rating bar based on the fill animation
   const width = fillAnimation.interpolate({
     inputRange: [0, 100],
     outputRange: ['0%', '100%'],
   });
 
+  // Toggle the visibility of additives
   const toggleAdditives = () => {
     setShowAdditives(!showAdditives);
   };
@@ -114,11 +131,12 @@ const ResultScreen = () => {
           Product Analysis by <Text style={styles.titleHighlight}>Saleeka</Text>
         </Text>
 
+        {/* Product Image Section */}
         <View style={styles.imageContainer}>
           {!imageError ? (
             <Animated.Image
               source={{ uri: encodedImageUrl || '' }}
-              onError={() => setImageError(true)} // Set image error state on failure
+              onError={() => setImageError(true)}
               style={[
                 styles.productImage,
                 {
@@ -133,26 +151,30 @@ const ResultScreen = () => {
               <Text style={styles.imageFallbackText}>Image not found</Text>
             </View>
           )}
-            <LottieView
-              source={animation}
-              autoPlay
-              loop={true}
-              speed={0.75}
-              style={styles.lottieAnimation}
-            />
+          {/* Lottie animation based on product rating */}
+          <LottieView
+            source={animation}
+            autoPlay
+            loop={true}
+            speed={0.75}
+            style={styles.lottieAnimation}
+          />
         </View>
 
+        {/* Main Content Section */}
         <Animated.View style={[styles.gradientContainer, { opacity: fadeAnimation }]}>
           <LinearGradient
             colors={['#2F5651', '#478B4E']}
             style={styles.gradientBackground}
           >
             <View style={styles.productCard}>
+              {/* Product Name */}
               <View style={styles.productInfo}>
                 <Text style={styles.label}>Product Name:</Text>
                 <Text style={styles.productName}>{product.product_name}</Text>
               </View>
 
+              {/* Rating Bar */}
               <View style={styles.ratingBar}>
                 <View style={styles.ratingRow}>
                   <View style={styles.ratingIndicator}>
@@ -162,6 +184,7 @@ const ResultScreen = () => {
                 </View>
               </View>
 
+              {/* Warning or Excellent Section */}
               {bannedIngredients.length > 0 ? (
                 <View style={styles.warningSection}>
                   <Text style={styles.warningTitle}>Warning! This product contains:</Text>
@@ -180,6 +203,7 @@ const ResultScreen = () => {
                 </View>
               )}
 
+              {/* Nutritional Information */}
               <View style={styles.nutritionalInfo}>
                 <Text style={styles.nutritionalTitle}>Per Serving:</Text>
                 <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories ? product.calories.toFixed(1) : 'N/A'}</Text>
@@ -188,6 +212,7 @@ const ResultScreen = () => {
                 <Text style={styles.nutritionalText}>Fats: {product.fat ? product.fat.toFixed(1) : 'N/A'}g</Text>
               </View>
 
+              {/* Additives Section (Expandable) */}
               <TouchableOpacity style={styles.section} onPress={toggleAdditives}>
                 <Text style={styles.sectionTitle}>Additives</Text>
                 <Ionicons name={showAdditives ? "chevron-up" : "chevron-down"} size={24} color="#2C2C2C" />
@@ -207,6 +232,7 @@ const ResultScreen = () => {
                 </View>
               )}
 
+              {/* Health Score Button */}
               <TouchableOpacity style={styles.healthScoreButton} onPress={navigateToScoreScreen}>
                 <Text style={styles.healthScoreText}>View Health Score Scale</Text>
               </TouchableOpacity>
@@ -218,6 +244,7 @@ const ResultScreen = () => {
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

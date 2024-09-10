@@ -25,26 +25,40 @@ import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+// Get the device dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
+// Create an animated version of LinearGradient for smooth transitions
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 const SignUp = () => {
+  // State for form inputs
   const [form, setForm] = useState({
     username: '',
     email: '',
     password: '',
   });
+
+  // State for form validation errors
   const [errors, setErrors] = useState({
     username: '',
     email: '',
     password: '',
   });
+
+  // State for form submission status
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State for general error message
   const [error, setError] = useState('');
+
+  // State for password visibility toggle
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Animated value for form opacity (used for fade-in effect)
   const [formOpacity] = useState(new Animated.Value(0));
 
+  // Effect to animate form opacity on component mount
   useEffect(() => {
     Animated.timing(formOpacity, {
       toValue: 1,
@@ -53,6 +67,7 @@ const SignUp = () => {
     }).start();
   }, []);
 
+  // Validate username: only A-Z characters allowed
   const validateUsername = (username: string) => {
     if (!/^[A-Za-z]+$/.test(username)) {
       setErrors(prev => ({ ...prev, username: 'Username must contain only A-Z characters' }));
@@ -61,6 +76,7 @@ const SignUp = () => {
     }
   };
 
+  // Validate password: 8+ characters, at least one number and special character
   const validatePassword = (password: string) => {
     if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*]/.test(password)) {
       setErrors(prev => ({ ...prev, password: 'Password must be 8+ characters with at least one number and special character' }));
@@ -69,6 +85,7 @@ const SignUp = () => {
     }
   };
 
+  // Validate email using a simple regex pattern
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -78,35 +95,43 @@ const SignUp = () => {
     }
   };
 
+  // Handle username input change and validation
   const handleUsernameChange = (text: string) => {
     setForm(prevForm => ({ ...prevForm, username: text }));
     validateUsername(text);
   };
 
+  // Handle password input change and validation
   const handlePasswordChange = (text: string) => {
     setForm(prevForm => ({ ...prevForm, password: text }));
     validatePassword(text);
   };
 
+  // Handle email input change and validation
   const handleEmailChange = (text: string) => {
     setForm(prevForm => ({ ...prevForm, email: text }));
     validateEmail(text);
   };
 
+  // Handle sign up process
   const handleSignUp = async () => {
     setIsSubmitting(true);
     if (!errors.username && !errors.email && !errors.password) {
       try {
+        // Create user with email and password
         const userCredential = await auth().createUserWithEmailAndPassword(form.email, form.password);
         if (userCredential.user) {
+          // Update user profile with username
           await userCredential.user.updateProfile({
             displayName: form.username
           });
+          // Store additional user info in Firestore
           const userRef = firestore().collection('Users').doc(userCredential.user.uid);
           await userRef.set({
             username: form.username,
             email: form.email
           });
+          // Navigate to scan page after successful sign up
           while (router.canGoBack()) {
             router.back();
           }
@@ -139,11 +164,15 @@ const SignUp = () => {
               contentContainerStyle={styles.scrollViewContent}
               keyboardShouldPersistTaps="handled"
             >
+              {/* Header section with logo and title */}
               <View style={styles.headerContainer}>
                 <Image source={images.logo} style={styles.logo} resizeMode="contain" />
                 <CustomText style={styles.title}>Create Account</CustomText>
               </View>
+
+              {/* Form container with animated opacity */}
               <Animated.View style={[styles.formContainer, { opacity: formOpacity }]}>
+                {/* Username input */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
                     <Ionicons name="person-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
@@ -158,6 +187,8 @@ const SignUp = () => {
                   </View>
                   <Text style={styles.errorText}>{errors.username}</Text>
                 </View>
+
+                {/* Email input */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
                     <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
@@ -173,6 +204,8 @@ const SignUp = () => {
                   </View>
                   <Text style={styles.errorText}>{errors.email}</Text>
                 </View>
+
+                {/* Password input with visibility toggle */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
                     <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
@@ -195,7 +228,11 @@ const SignUp = () => {
                   </View>
                   <Text style={styles.errorText}>{errors.password}</Text>
                 </View>
+
+                {/* General error message */}
                 {error ? <CustomText style={styles.generalErrorText}>{error}</CustomText> : null}
+
+                {/* Sign Up button */}
                 <CustomButton
                   title="Sign Up"
                   handlePress={handleSignUp}
@@ -203,12 +240,14 @@ const SignUp = () => {
                   style={styles.signUpButton}
                 />
 
+                {/* Divider */}
                 <View style={styles.divider}>
                   <View style={styles.dividerLine} />
                   <CustomText style={styles.dividerText}>OR</CustomText>
                   <View style={styles.dividerLine} />
                 </View>
 
+                {/* Social sign up buttons */}
                 <TouchableOpacity style={styles.socialButton}>
                   <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
@@ -219,6 +258,8 @@ const SignUp = () => {
                   <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
                 </TouchableOpacity>
               </Animated.View>
+
+              {/* Login link */}
               <View style={styles.loginContainer}>
                 <CustomText style={styles.loginText}>Already have an account? </CustomText>
                 <Link href="/login" style={styles.loginLink}>
@@ -233,6 +274,7 @@ const SignUp = () => {
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
@@ -248,7 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 20,
   },
   headerContainer: {
@@ -297,7 +339,7 @@ const styles = StyleSheet.create({
     color: '#FFA500',
     fontSize: 12,
     marginTop: 5,
-    minHeight: 15, // Ensures consistent height even when empty
+    minHeight: 15,
   },
   generalErrorText: {
     color: '#FFA500',

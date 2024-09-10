@@ -11,19 +11,27 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useUser } from '../../context/UserContext';
 
+// This component handles the scenario when a product is not found in the database
+// It allows users to submit new product information, including images
 const ProductNotFound = () => {
+  // Extract barcode from URL params
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
+  
+  // State variables to manage component data and UI
   const [barcodeState, setBarcodeState] = useState(barcode || '');
   const [productImage, setProductImage] = useState<string | null>(null);
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Hooks for navigation and user context
   const router = useRouter();
   const { user } = useUser();
 
   useEffect(() => {
     console.log('Received Barcode:', barcode);
 
+    // Request camera permission when component mounts
     const requestPermission = async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setCameraPermission(status === 'granted');
@@ -32,9 +40,11 @@ const ProductNotFound = () => {
     requestPermission();
   }, [barcode]);
 
+  // Function to upload an image to Firebase Storage
   const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
     if (!uri) return null;
   
+    // Adjust URI for iOS to ensure compatibility
     const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
     const storageRef = storage().ref(imageName);
     
@@ -49,6 +59,7 @@ const ProductNotFound = () => {
     }
   };
 
+  // Function to take a photo using the device camera
   const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (cameraPermission === null) {
       return;
@@ -70,6 +81,7 @@ const ProductNotFound = () => {
     }
   };
 
+  // Function to pick an image from the device's photo library
   const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -83,6 +95,7 @@ const ProductNotFound = () => {
     }
   };
 
+  // Function to handle image selection, allowing user to choose between camera and photo library
   const handleImageSelection = (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     Alert.alert(
       "Select Image Source",
@@ -104,7 +117,9 @@ const ProductNotFound = () => {
     );
   };
 
+  // Function to handle form submission
   const handleSubmit = async () => {
+    // Validate that all required fields are filled
     if (!barcodeState || !productImage || !ingredientsImage) {
       Alert.alert('Missing Information', 'Please provide all required information before submitting.');
       return;
@@ -113,6 +128,7 @@ const ProductNotFound = () => {
     setIsSubmitting(true);
 
     try {
+      // Upload images to Firebase Storage
       const productImageUrl = await uploadImage(productImage, `products/${barcodeState}_front.jpg`);
       const ingredientsImageUrl = await uploadImage(ingredientsImage, `products/${barcodeState}_ingredients.jpg`);
 
@@ -120,6 +136,7 @@ const ProductNotFound = () => {
         throw new Error('Failed to upload images');
       }
 
+      // Add new product to Firestore database
       await firestore().collection('products').add({
         userId: user?.uid,
         barcode: barcodeState,
@@ -130,6 +147,7 @@ const ProductNotFound = () => {
         timestamp: firestore.FieldValue.serverTimestamp(),
       });
 
+      // Show success message and navigate back to scan page
       Alert.alert(
         'Submission Successful',
         'Thank you for submitting the product information.',
@@ -143,10 +161,12 @@ const ProductNotFound = () => {
     }
   };
 
+  // Render loading state while waiting for camera permission
   if (cameraPermission === null) {
     return <Text>Requesting camera permission...</Text>;
   }
 
+  // Render permission request if camera access is not granted
   if (!cameraPermission) {
     return (
       <View style={styles.container}>
@@ -158,10 +178,12 @@ const ProductNotFound = () => {
     );
   }
 
+  // Main render method for the component
   return (
     <SafeAreaView style={styles.container}>
       {!isSubmitting ? (
         <View style={styles.content}>
+          {/* App logo */}
           <Image
             source={require('../../assets/images/logo.png')}
             style={styles.logo}
@@ -172,6 +194,7 @@ const ProductNotFound = () => {
             Result not found. Please upload product info for flag score
           </Text>
 
+          {/* Barcode input field */}
           <TextInput
             style={styles.input}
             placeholder="Input Barcode Number"
@@ -180,6 +203,7 @@ const ProductNotFound = () => {
             placeholderTextColor="#888"
           />
 
+          {/* Image selection buttons */}
           <View style={styles.photoContainer}>
             <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
               {productImage ? (
@@ -203,11 +227,13 @@ const ProductNotFound = () => {
             </TouchableOpacity>
           </View>
 
+          {/* Submit button */}
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitText}>Submit</Text>
           </TouchableOpacity>
         </View>
       ) : (
+        // Loading animation while submitting
         <View style={styles.centeredContainer}>
           <LottieView
             source={avocadoAnimation}
@@ -222,6 +248,7 @@ const ProductNotFound = () => {
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
