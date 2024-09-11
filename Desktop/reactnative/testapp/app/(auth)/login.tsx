@@ -13,6 +13,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,8 +22,11 @@ import { images } from '../../constants';
 import CustomText from '@/components/CustomText';
 import CustomButton from '../../components/button';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AppleButton, appleAuth } from '@invertase/react-native-apple-authentication';
 
 // Get the device dimensions for responsive design
 const { width, height } = Dimensions.get('window');
@@ -80,13 +84,110 @@ const Login = () => {
     }
   };
 
-  // Placeholder functions for social login buttons
-  const handleAppleLogin = () => {
-    console.log('Apple login pressed');
+  const handleGoogleLogin = async () => {
+    try {
+      console.log('Starting Google Sign-In process...');
+      
+      // Check if Google Services are available
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('Google Play Services are available');
+      
+      // Perform Google Sign-In
+      const signInResult: any = await GoogleSignin.signIn();
+      console.log('Google Sign-In result:', JSON.stringify(signInResult, null, 2));
+      
+      // Attempt to retrieve idToken and accessToken
+      const idToken = signInResult?.idToken || signInResult?.user?.idToken || signInResult?.data?.idToken;
+      const accessToken = signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
+  
+      if (!idToken) {
+        console.error('No idToken found in sign-in result');
+        throw new Error('Google sign-in failed: No idToken found');
+      }
+  
+      console.log('idToken successfully retrieved');
+  
+      // Create a credential using the Google ID token and access token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
+      console.log('Google credential created');
+      
+      // Sign in to Firebase with the Google credential
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      console.log('Firebase sign-in successful');
+      console.log('User UID:', userCredential.user.uid);
+  
+      // Save user data to Firestore
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+          // User does not exist, so create a new document
+          await userRef.set({
+            username: userCredential.user.displayName,
+            email: userCredential.user.email,
+          });
+          console.log('User data saved to Firestore');
+        } else {
+          console.log('User already exists in Firestore');
+        }
+        
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Detailed Google Sign-In Error:', error);
+      if (error.code) {
+        console.error('Error code:', error.code);
+      }
+      if (error.message) {
+        console.error('Error message:', error.message);
+      }
+      setError('Google sign-in failed. Please try again.');
+    }
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Google login pressed');
+  const handleAppleSignIn = async () => {
+    try {
+      // Start the Apple sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken, nonce } = appleAuthRequestResponse;
+
+      if (!identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      // Create a Firebase credential with the token
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      // Sign in to Firebase with the Apple credential
+      const userCredential = await auth().signInWithCredential(appleCredential);
+
+      // Check if the user data exists in Firestore and create it if necessary
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+          // User does not exist, so create a new document
+          await userRef.set({
+            username: userCredential.user.displayName || 'Apple User',
+            email: userCredential.user.email,
+          });
+          console.log('User data saved to Firestore');
+        } else {
+          console.log('User already exists in Firestore');
+        }
+        
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Apple Sign-In Error:', error);
+      Alert.alert('Apple Sign-In Error', error.message);
+    }
   };
 
   return (
@@ -179,7 +280,7 @@ const Login = () => {
                 </View>
 
                 {/* Social login buttons */}
-                <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin}>
+                <TouchableOpacity style={styles.socialButton} onPress={handleAppleSignIn}>
                   <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Login with Apple</CustomText>
                 </TouchableOpacity>
@@ -315,6 +416,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginVertical: 10,
   },
   signupContainer: {
     flexDirection: 'row',

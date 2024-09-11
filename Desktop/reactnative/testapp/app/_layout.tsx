@@ -9,6 +9,8 @@ import { UserProvider } from '../context/UserContext';
 import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,15 +29,14 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const inAuthGroup = segments[0] === '(auth)';
-  
+
     if (!user && !inAuthGroup) {
       router.replace('/Home');
     } else if (user && inAuthGroup) {
-      // Ensure navigation to the scan page only when needed
       router.replace('/scan');
     }
   }, [user, segments]);
-  
+
   return <>{children}</>;
 }
 
@@ -59,6 +60,15 @@ export default function Layout() {
     async function prepare() {
       try {
         await SplashScreen.preventAutoHideAsync();
+
+        // Configure Google Sign-In with offlineAccess
+        GoogleSignin.configure({
+          webClientId: '672182447294-54qp4npu9efeksp72v6gvpkk42rn86n7.apps.googleusercontent.com', // Your Web Client ID
+          iosClientId: '672182447294-3bk77dd2jedgqakkmoc0o45cbcpp7eaj.apps.googleusercontent.com', // iOS Client ID
+          offlineAccess: true, // Enables offline access to get idToken
+          scopes: ['email', 'profile'],
+        });
+
         // Any other initialization logic can go here
       } catch (e) {
         console.warn(e);
@@ -89,7 +99,6 @@ export default function Layout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AuthWrapper>
           <Stack>
-            {/* <Stack.Screen name="index" options={{ headerShown: false }} /> */}
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="score" options={{ headerShown: false }} />

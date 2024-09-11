@@ -7,6 +7,7 @@ import { Buffer } from 'buffer';
 import redXAnimation from '../../assets/lottie/RedX.json';
 import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
 import cautionAnimation from '../../assets/lottie/Caution.json';
+import loadingAnimation from '../../assets/lottie/Loading.json';
 import bannedIngredientsData from '../bannedIngredients.json';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -31,9 +32,12 @@ interface BannedIngredient {
 }
 
 const ResultScreen = () => {
-  // Get the product data from the route params
   const { productData } = useLocalSearchParams();
   const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState('Please wait a short moment while we obtain your results...');
+  const [parsedProduct, setParsedProduct] = useState<ProductData | null>(null);
 
   // Animation references and states
   const fillAnimation = useRef(new Animated.Value(0)).current;
@@ -45,19 +49,99 @@ const ResultScreen = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Check if product data exists
-  if (!productData) {
+  useEffect(() => {
+    if (productData) {
+      const longLoadingTimeout = setTimeout(() => {
+        setLoadingText('This is taking longer than usual. Please wait...');
+      }, 10000); // Change text after 10 seconds
+
+      try {
+        const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));
+        setParsedProduct(product);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error parsing product data:', error);
+        setLoadingText('Error loading product data. Please try again.');
+      }
+
+      return () => clearTimeout(longLoadingTimeout);
+    }
+  }, [productData]);
+
+  // useEffect(() => {
+  //   if (productData) {
+  //     const longLoadingTimeout = setTimeout(() => {
+  //       setLoadingText('This is taking longer than usual. Please wait...');
+  //     }, 10000); // Change text after 10 seconds
+
+  //     const simulateSlowConnection = async () => {
+  //       try {
+  //         // Simulate a delay of 5 seconds
+  //         await new Promise(resolve => setTimeout(resolve, 11000));
+
+  //         const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));
+  //         setParsedProduct(product);
+  //         setLoading(false);
+  //       } catch (error) {
+  //         console.error('Error parsing product data:', error);
+  //         setLoadingText('Error loading product data. Please try again.');
+  //       }
+  //     };
+
+  //     simulateSlowConnection();
+
+  //     return () => clearTimeout(longLoadingTimeout);
+  //   }
+  // }, [productData]);
+
+  useEffect(() => {
+    if (!loading && parsedProduct) {
+      // Animate the rating bar fill
+      Animated.timing(fillAnimation, {
+        toValue: calculateRating(bannedIngredients).fillPercentage,
+        duration: 1500,
+        useNativeDriver: false,
+      }).start();
+
+      // Fade in the content
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [loading, parsedProduct]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={styles.loadingContent}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={styles.logo}
+            />
+            <LottieView
+              source={loadingAnimation}
+              autoPlay
+              loop
+              style={styles.loadingAnimation}
+            />
+          </View>
+          <Text style={styles.loadingTitle}>Loading Results</Text>
+          <Text style={styles.loadingText}>{loadingText}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!parsedProduct) {
     return <Text>Product data not found</Text>;
   }
 
-  // Parse the product data from base64 encoding
-  const product: ProductData = JSON.parse(Buffer.from(productData as string, 'base64').toString('utf-8'));
-  const ingredients = product.ingredients || [];
-  // Encode the image URL to handle special characters
-  const encodedImageUrl = product.image_url ? product.image_url.replace('/products/', '/products%2F') : '';
-  console.log('Product Data:', product);
-
-  const additives = product.additives || [];
+  const ingredients = parsedProduct.ingredients || [];
+  const encodedImageUrl = parsedProduct.image_url ? parsedProduct.image_url.replace('/products/', '/products%2F') : '';
+  const additives = parsedProduct.additives || [];
 
   // Filter banned ingredients based on the product's ingredients
   const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients.filter((ingredient) =>
@@ -71,7 +155,7 @@ const ResultScreen = () => {
     bannedIngredients: BannedIngredient[]
   ): { rating: string; color: string; fillPercentage: number; animation: any } => {
     if (bannedIngredients.length === 0) {
-      return { rating: 'Excellent', color: '#4CAF50', fillPercentage: 100, animation: checkmarkAnimation };
+      return { rating: 'Clean', color: '#4CAF50', fillPercentage: 100, animation: checkmarkAnimation };
     }
 
     const severityCount = {
@@ -90,23 +174,6 @@ const ResultScreen = () => {
   };
 
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
-
-  // Set up animations when the component mounts
-  useEffect(() => {
-    // Animate the rating bar fill
-    Animated.timing(fillAnimation, {
-      toValue: fillPercentage,
-      duration: 1500,
-      useNativeDriver: false,
-    }).start();
-
-    // Fade in the content
-    Animated.timing(fadeAnimation, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fillPercentage]);
 
   // Navigation function to the score screen
   const navigateToScoreScreen = () => {
@@ -171,7 +238,7 @@ const ResultScreen = () => {
               {/* Product Name */}
               <View style={styles.productInfo}>
                 <Text style={styles.label}>Product Name:</Text>
-                <Text style={styles.productName}>{product.product_name}</Text>
+                <Text style={styles.productName}>{parsedProduct.product_name}</Text>
               </View>
 
               {/* Rating Bar */}
@@ -206,10 +273,10 @@ const ResultScreen = () => {
               {/* Nutritional Information */}
               <View style={styles.nutritionalInfo}>
                 <Text style={styles.nutritionalTitle}>Per Serving:</Text>
-                <Text style={styles.nutritionalText}>Calories(Kcal): {product.calories ? product.calories.toFixed(1) : 'N/A'}</Text>
-                <Text style={styles.nutritionalText}>Protein: {product.protein ? product.protein.toFixed(1) : 'N/A'}g</Text>
-                <Text style={styles.nutritionalText}>Carbs: {product.carbs ? product.carbs.toFixed(1) : 'N/A'}g</Text>
-                <Text style={styles.nutritionalText}>Fats: {product.fat ? product.fat.toFixed(1) : 'N/A'}g</Text>
+                <Text style={styles.nutritionalText}>Calories(Kcal): {parsedProduct.calories ? parsedProduct.calories.toFixed(1) : 'N/A'}</Text>
+                <Text style={styles.nutritionalText}>Protein: {parsedProduct.protein ? parsedProduct.protein.toFixed(1) : 'N/A'}g</Text>
+                <Text style={styles.nutritionalText}>Carbs: {parsedProduct.carbs ? parsedProduct.carbs.toFixed(1) : 'N/A'}g</Text>
+                <Text style={styles.nutritionalText}>Fats: {parsedProduct.fat ? parsedProduct.fat.toFixed(1) : 'N/A'}g</Text>
               </View>
 
               {/* Additives Section (Expandable) */}
@@ -436,6 +503,46 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#f1ede1',
+  },
+  loadingContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  logoContainer: {
+    position: 'relative',
+    width: 150,
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+  },
+  loadingAnimation: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+  },
+  loadingTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#3A6A64',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
   },
 });
 

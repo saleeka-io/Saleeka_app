@@ -13,6 +13,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +25,8 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AppleButton, appleAuth } from '@invertase/react-native-apple-authentication';
 
 // Get the device dimensions for responsive design
 const { width, height } = Dimensions.get('window');
@@ -70,18 +73,21 @@ const SignUp = () => {
   // Validate username: only A-Z characters allowed
   const validateUsername = (username: string) => {
     if (!/^[A-Za-z]+$/.test(username)) {
-      setErrors(prev => ({ ...prev, username: 'Username must contain only A-Z characters' }));
+      setErrors((prev) => ({ ...prev, username: 'Username must contain only A-Z characters' }));
     } else {
-      setErrors(prev => ({ ...prev, username: '' }));
+      setErrors((prev) => ({ ...prev, username: '' }));
     }
   };
 
   // Validate password: 8+ characters, at least one number and special character
   const validatePassword = (password: string) => {
     if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*]/.test(password)) {
-      setErrors(prev => ({ ...prev, password: 'Password must be 8+ characters with at least one number and special character' }));
+      setErrors((prev) => ({
+        ...prev,
+        password: 'Password must be 8+ characters with at least one number and special character',
+      }));
     } else {
-      setErrors(prev => ({ ...prev, password: '' }));
+      setErrors((prev) => ({ ...prev, password: '' }));
     }
   };
 
@@ -89,27 +95,27 @@ const SignUp = () => {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address' }));
     } else {
-      setErrors(prev => ({ ...prev, email: '' }));
+      setErrors((prev) => ({ ...prev, email: '' }));
     }
   };
 
   // Handle username input change and validation
   const handleUsernameChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, username: text }));
+    setForm((prevForm) => ({ ...prevForm, username: text }));
     validateUsername(text);
   };
 
   // Handle password input change and validation
   const handlePasswordChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, password: text }));
+    setForm((prevForm) => ({ ...prevForm, password: text }));
     validatePassword(text);
   };
 
   // Handle email input change and validation
   const handleEmailChange = (text: string) => {
-    setForm(prevForm => ({ ...prevForm, email: text }));
+    setForm((prevForm) => ({ ...prevForm, email: text }));
     validateEmail(text);
   };
 
@@ -123,13 +129,13 @@ const SignUp = () => {
         if (userCredential.user) {
           // Update user profile with username
           await userCredential.user.updateProfile({
-            displayName: form.username
+            displayName: form.username,
           });
           // Store additional user info in Firestore
           const userRef = firestore().collection('Users').doc(userCredential.user.uid);
           await userRef.set({
             username: form.username,
-            email: form.email
+            email: form.email,
           });
           // Navigate to scan page after successful sign up
           while (router.canGoBack()) {
@@ -149,6 +155,87 @@ const SignUp = () => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      console.log('Starting Google Sign-In process...');
+
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('Google Play Services are available');
+
+      const signInResult: any = await GoogleSignin.signIn();
+      console.log('Google Sign-In result:', JSON.stringify(signInResult, null, 2));
+
+      const idToken = signInResult?.idToken || signInResult?.user?.idToken || signInResult?.data?.idToken;
+      const accessToken =
+        signInResult?.accessToken || signInResult?.user?.accessToken || signInResult?.data?.accessToken;
+
+      if (!idToken) {
+        console.error('No idToken found in sign-in result');
+        throw new Error('Google sign-up failed: No idToken found');
+      }
+
+      console.log('idToken successfully retrieved');
+
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
+      console.log('Google credential created');
+
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      console.log('Firebase sign-in successful');
+      console.log('User UID:', userCredential.user.uid);
+
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        await userRef.set({
+          username: userCredential.user.displayName,
+          email: userCredential.user.email,
+        });
+        console.log('User data saved to Firestore');
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Detailed Google Sign-In Error:', error);
+      if (error.code) {
+        console.error('Error code:', error.code);
+      }
+      if (error.message) {
+        console.error('Error message:', error.message);
+      }
+      setError('Google sign-up failed. Please try again.');
+    }
+  };
+
+  const handleAppleSignUp = async () => {
+    try {
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken, nonce } = appleAuthRequestResponse;
+
+      if (!identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      const userCredential = await auth().signInWithCredential(appleCredential);
+
+      if (userCredential.user) {
+        const userRef = firestore().collection('Users').doc(userCredential.user.uid);
+        await userRef.set({
+          username: userCredential.user.displayName || 'Apple User',
+          email: userCredential.user.email,
+        });
+        console.log('User data saved to Firestore');
+        router.replace('/scan');
+      }
+    } catch (error: any) {
+      console.error('Apple Sign-Up Error:', error);
+      Alert.alert('Apple Sign-Up Error', error.message);
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <AnimatedLinearGradient
@@ -157,7 +244,7 @@ const SignUp = () => {
       >
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
           >
             <ScrollView
@@ -219,7 +306,7 @@ const SignUp = () => {
                     />
                     <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
                       <Ionicons
-                        name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                        name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
                         size={24}
                         color="#FFFFFF"
                         style={styles.passwordIcon}
@@ -248,12 +335,12 @@ const SignUp = () => {
                 </View>
 
                 {/* Social sign up buttons */}
-                <TouchableOpacity style={styles.socialButton}>
+                <TouchableOpacity style={styles.socialButton} onPress={handleAppleSignUp}>
                   <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.socialButton}>
+                <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignUp}>
                   <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
                 </TouchableOpacity>
@@ -384,6 +471,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginVertical: 10,
   },
   loginContainer: {
     flexDirection: 'row',

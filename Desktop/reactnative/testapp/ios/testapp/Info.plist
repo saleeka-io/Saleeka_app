@@ -27,8 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
-          <string>com.Saleeka.testapp</string>
+          <string>com.googleusercontent.apps.672182447294-3bk77dd2jedgqakkmoc0o45cbcpp7eaj</string>
         </array>
       </dict>
       <dict>

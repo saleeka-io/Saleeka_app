@@ -52,12 +52,15 @@ const BarcodeScanner = () => {
   );
 
 
+  // 028400589871 - Red
+  // 0737628064502 - Yellow
+  // 742365007071 - Green
 
   // Testing barcode automatically on component mount
-  // useEffect(() => {
-  //   const testBarcode = '742365007071'; // Hardcoded barcode for testing
-  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  // }, []);
+  useEffect(() => {
+    const testBarcode = '742365007071'; // Hardcoded barcode for testing
+    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  }, []);
 
 
   // Main function to handle barcode scanning
