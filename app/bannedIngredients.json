@@ -1,0 +1,446 @@
+{
+    "bannedIngredients": [
+      {
+        "name": "BHA (Butylated Hydroxyanisole)",
+        "casNumber": "25013-16-5",
+        "reason": "Classified as a possible human carcinogen",
+        "severity": "red"
+      },
+      {
+        "name": "BHT (Butylated Hydroxytoluene)",
+        "casNumber": "128-37-0",
+        "reason": "Suspected endocrine disruptor",
+        "severity": "red"
+      },
+      {
+        "name": "Oxybenzone",
+        "casNumber": "131-57-7",
+        "reason": "Suspected endocrine disruptor and skin sensitizer",
+        "severity": "red"
+      },
+      {
+        "name": "Triclosan",
+        "casNumber": "3380-34-5",
+        "reason": "Classified as a skin irritant and potential endocrine disruptor",
+        "severity": "red"
+      },
+      {
+        "name": "Formaldehyde",
+        "casNumber": "50-00-0",
+        "reason": "Known human carcinogen",
+        "severity": "red"
+      },
+      {
+        "name": "Parabens (Isopropyl-, Isobutyl-, Phenyl-, Benzyl-, and Pentylparaben)",
+        "casNumber": "Various",
+        "reason": "Endocrine disruptors and potential carcinogens",
+        "severity": "red"
+      },
+      {
+        "name": "Hydroquinone",
+        "casNumber": "123-31-9",
+        "reason": "Potential human carcinogen",
+        "severity": "red"
+      },
+      {
+        "name": "Phthalates (DBP, DEHP, BBP, DIBP)",
+        "casNumber": "Various",
+        "reason": "Endocrine disruptors and reproductive toxicants",
+        "severity": "red"
+      },
+      {
+        "name": "Acrylamide",
+        "casNumber": "79-06-1",
+        "reason": "Carcinogen",
+        "severity": "red"
+      },
+      {
+        "name": "PFOA (Perfluorooctanoic acid)",
+        "casNumber": "335-67-1",
+        "reason": "Persistent, bioaccumulative and toxic substance",
+        "severity": "red"
+      },
+      {
+        "name": "Red 40 (Allura Red AC)",
+        "casNumber": "25956-17-6",
+        "reason": "Linked to hyperactivity in children",
+        "severity": "yellow"
+      },
+      {
+        "name": "Chlorofluorocarbons (CFCs)",
+        "casNumber": "Various",
+        "reason": "Ozone-depleting substances",
+        "severity": "red"
+      },
+      {
+        "name": "Lead and its compounds",
+        "casNumber": "Various",
+        "reason": "Neurotoxic and harmful to human health",
+        "severity": "red"
+      },
+      {
+        "name": "Mercury and its compounds",
+        "casNumber": "Various",
+        "reason": "Neurotoxic and harmful to human health",
+        "severity": "red"
+      },
+      {
+        "name": "Sunflower Oil",
+        "casNumber": "8001-21-6",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Safflower Oil",
+        "casNumber": "8001-23-8",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Vegetable Oil",
+        "casNumber": "Various",
+        "reason": "Linked to inflammation and other health concerns, particularly when heated at high temperatures or consumed in excess",
+        "severity": "yellow"
+      },
+      {
+        "name": "Vegetable Oils in Varying Quantities",
+        "casNumber": "Various",
+        "reason": "High in omega-6 fatty acids, which can contribute to inflammation when consumed in excess, particularly in processed foods",
+        "severity": "yellow"
+      },
+    
+      {
+        "name": "Corn Oil",
+        "casNumber": "8001-30-7",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Soybean Oil",
+        "casNumber": "8001-22-7",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Cottonseed Oil",
+        "casNumber": "8001-29-4",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Canola Oil",
+        "casNumber": "120962-03-0",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Grapeseed Oil",
+        "casNumber": "85594-37-2",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Rice Bran Oil",
+        "casNumber": "68553-81-1",
+        "reason": "Linked to inflammation and other health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Palm Oil",
+        "casNumber": "8002-75-3",
+        "reason": "Linked to environmental and health concerns",
+        "severity": "yellow"
+      },
+      {
+        "name": "Xanthan Gum",
+        "casNumber": "11138-66-2",
+        "reason": "Linked to digestive issues in large amounts",
+        "severity": "yellow"
+      },
+      {
+        "name": "Arabic Gum",
+        "casNumber": "9000-01-5",
+        "reason": "Generally considered safe but can cause digestive issues in large amounts",
+        "severity": "yellow"
+      },
+      {
+        "name": "Guar Gum",
+        "casNumber": "9000-30-0",
+        "reason": "Linked to digestive issues in large amounts",
+        "severity": "yellow"
+      },
+      {
+        "name": "Carrageenan",
+        "casNumber": "9000-07-1",
+        "reason": "Linked to inflammation and digestive issues",
+        "severity": "red"
+      },
+      {
+        "name": "Artificial Flavor",
+        "casNumber": "Various",
+        "reason": "Linked to various health concerns depending on the specific chemicals used",
+        "severity": "red"
+      },
+      {
+        "name": "Artificial Flavors",
+        "casNumber": "Various",
+        "reason": "Linked to various health concerns depending on the specific chemicals used",
+        "severity": "red"
+      },
+      {
+        "name": "Natural Flavors",
+        "casNumber": "Various",
+        "reason": "Generally considered safe but the exact composition can vary",
+        "severity": "green"
+      },
+      {
+        "name": "Olive Oil",
+        "casNumber": "8001-25-0",
+        "reason": "Generally considered safe but quality matters, 100% extra virgin olive oil is safer",
+        "severity": "yellow"
+      },
+      {
+        "name": "Coconut Oil",
+        "casNumber": "8001-31-8",
+        "reason": "Generally considered safe",
+        "severity": "green"
+      },
+      {
+        "name": "Avocado Oil",
+        "casNumber": "8024-32-6",
+        "reason": "Generally considered safe",
+        "severity": "green"
+      },
+
+      {
+        "name": "Trans-Fat",
+        "casNumber": "Various",
+        "reason": "Increases LDL cholesterol and decreases HDL cholesterol, linked to heart disease",
+        "severity": "red"
+      },
+      {
+        "name": "Partially Hydrogenated Oils",
+        "casNumber": "Various",
+        "reason": "Known to clog arteries and contribute to obesity and heart disease",
+        "severity": "red"
+      },
+      {
+        "name": "High Fructose Corn Syrup (HFCS)",
+        "casNumber": "64618-18-0",
+        "reason": "Increases cholesterol and triglyceride levels, leads to overeating and obesity",
+        "severity": "red"
+      },
+      {
+        "name": "Aspartame",
+        "casNumber": "22839-47-0",
+        "reason": "Hard on the body’s metabolic system, linked to increased caloric intake",
+        "severity": "red"
+      },
+      {
+        "name": "Sucralose",
+        "casNumber": "56038-13-2",
+        "reason": "Hard on the body’s metabolic system, linked to increased caloric intake",
+        "severity": "red"
+      },
+      {
+        "name": "Saccharin",
+        "casNumber": "81-07-2",
+        "reason": "Hard on the body’s metabolic system, linked to increased caloric intake",
+        "severity": "red"
+      },
+      {
+        "name": "Sodium Benzoate",
+        "casNumber": "532-32-1",
+        "reason": "Preservative that can cause disturbances with thyroid levels",
+        "severity": "red"
+      },
+      {
+        "name": "Potassium Benzoate",
+        "casNumber": "582-25-2",
+        "reason": "Preservative that can cause disturbances with thyroid levels",
+        "severity": "red"
+      },
+      {
+        "name": "Sodium Nitrite",
+        "casNumber": "7632-00-0",
+        "reason": "Found in processed meats, linked to colon cancer, heart disease, and obesity",
+        "severity": "red"
+      },
+      {
+        "name": "Sodium Nitrate",
+        "casNumber": "7631-99-4",
+        "reason": "Found in processed meats, linked to colon cancer, heart disease, and obesity",
+        "severity": "red"
+      },
+      {
+        "name": "MSG (Monosodium Glutamate)",
+        "casNumber": "142-47-2",
+        "reason": "Enhances flavor but can be harmful to brain function, linked to high sodium levels",
+        "severity": "yellow"
+      },
+      {
+        "name": "Sesame Oil",
+        "casNumber": "8008-74-0",
+        "reason": "Contains high levels of omega-6 fatty acids, which can contribute to inflammation when consumed in excess",
+        "severity": "yellow"
+      },
+      {
+        "name": "Pumpkin Seed Oil",
+        "casNumber": "8016-49-7",
+        "reason": "Generally considered safe but high in omega-6 fatty acids, which can be inflammatory if not balanced with omega-3 intake",
+        "severity": "yellow"
+      },
+      {
+        "name": "Flaxseed Oil",
+        "casNumber": "8001-26-1",
+        "reason": "High in omega-3 fatty acids but can be unstable and prone to oxidation",
+        "severity": "yellow"
+      },
+      {
+        "name": "Hemp Seed Oil",
+        "casNumber": "89958-21-4",
+        "reason": "Contains a good balance of omega-3 and omega-6 fatty acids, generally considered safe but can be prone to oxidation",
+        "severity": "yellow"
+      },
+      {
+        "name": "Peanut Oil",
+        "casNumber": "8002-03-7",
+        "reason": "High in omega-6 fatty acids, which can contribute to inflammation when consumed in excess",
+        "severity": "yellow"
+      },
+
+      {
+        "name": "Blue 1",
+        "casNumber": "3844-45-9",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+      {
+        "name": "Blue 2",
+        "casNumber": "860-22-0",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+      {
+        "name": "Green 3",
+        "casNumber": "2353-45-9",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+      {
+        "name": "Red 3",
+        "casNumber": "16423-68-0",
+        "reason": "Linked to cancer in animals",
+        "severity": "red"
+      },
+      {
+        "name": "Red 40",
+        "casNumber": "25956-17-6",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+      {
+        "name": "Yellow 5",
+        "casNumber": "1934-21-0",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+      {
+        "name": "Yellow 6",
+        "casNumber": "2783-94-0",
+        "reason": "Linked to hyperactivity and other behavioral issues in children",
+        "severity": "red"
+      },
+
+      {
+        "name": "Citric Acid",
+        "casNumber": "77-92-9",
+        "reason": "Generally considered safe, used as a preservative and flavoring agent",
+        "severity": "yellow, but can be a gut irritant"
+      },
+      {
+        "name": "Ascorbic Acid",
+        "casNumber": "50-81-7",
+        "reason": "Generally considered safe but made from GMO CORN",
+        "severity": "yellow"
+      },
+      {
+        "name": "Maltodextrin",
+        "casNumber": "9050-36-6",
+        "reason": "Generally considered safe, but can cause blood sugar spikes",
+        "severity": "yellow"
+      },
+      {
+        "name": "Titanium Dioxide",
+        "casNumber": "13463-67-7",
+        "reason": "Used as a whitening agent, potential carcinogen if inhaled in large amounts",
+        "severity": "red"
+      },
+      {
+        "name": "Silica",
+        "casNumber": "7631-86-9",
+        "reason": "Used as an anti-caking agent, generally considered safe",
+        "severity": "red"
+      },
+      {
+        "name": "Silicon Dioxide",
+        "casNumber": "14808-60-7",
+        "reason": "Used as an anti-caking agent, generally considered safe",
+        "severity": "red"
+      },
+      {
+        "name": "Disodium Inosinate",
+        "casNumber": "4691-65-0",
+        "reason": "Flavor enhancer, generally considered safe but often used with MSG which has associated health concerns",
+        "severity": "yellow"
+      },
+
+      {
+        "name": "Vegetarian Enzymes",
+        "casNumber": "Various",
+        "reason": "Used in food processing, generally considered safe but can cause allergies in sensitive individuals",
+        "severity": "yellow"
+      },
+      {
+        "name": "Rennet",
+        "casNumber": "None",
+        "reason": "Used in cheese production, generally considered safe",
+        "severity": "green"
+      }
+      ,
+  {
+    "name": "Carmine",
+    "casNumber": "1390-65-4",
+    "reason": "Can cause severe allergic reactions in some individuals",
+    "severity": "yellow"
+  },
+  {
+    "name": "Carboxymethylcellulose",
+    "casNumber": "9000-11-7",
+    "reason": "Linked to digestive issues and inflammation",
+    "severity": "yellow"
+  },
+  {
+    "name": "Polysorbate 80",
+    "casNumber": "9005-65-6",
+    "reason": "Can cause allergic reactions and potentially impact the immune system",
+    "severity": "yellow"
+  },{
+    "name": "Acesulfame Potassium (Ace-K)",
+    "casNumber": "55589-62-3",
+    "reason": "Linked to potential cancer risk and thyroid issues in some studies",
+    "severity": "red"
+  },
+  {
+    "name": "Potassium Sorbate",
+    "casNumber": "24634-61-5",
+    "reason": "Generally considered safe, but can cause allergic reactions and skin irritations in some individuals",
+    "severity": "yellow"
+  }
+
+
+
+
+    ]
+  }
+  
