@@ -8,5 +8,6 @@ import empty from "../assets/images/empty.png";
 import bgImage from "../assets/images/bgImage.png";
 import bigCircle from "../assets/images/bigCircle.png";
 import smallCircle from "../assets/images/smallCircle.png";
-import logoImage from "../assets/images/logoImage.png"
-export default { profile, thumbnail, cards, path, logo, logoSmall, empty, bgImage,logoImage, bigCircle, smallCircle};
+import logoImage from "../assets/images/logoImage.png";
+import HDlogo from "../assets/images/HDlogo.png";
+export default { profile, thumbnail, cards, path, logo, logoSmall, empty, bgImage,logoImage, bigCircle, smallCircle, HDlogo};

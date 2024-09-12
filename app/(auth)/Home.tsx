@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, StatusBar, StyleSheet, Dimensions,
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-import { images } from '../..//constants';
+import { images } from '../../constants';
 import EStyleSheet from 'react-native-extended-stylesheet';
 import CustomText from '@/components/CustomText';
 
@@ -27,8 +27,8 @@ const App = () => {
         >
           <SafeAreaView style={styles.safeArea}>
             <Image
-              style={[styles.logo, { top: logoTopPosition }]}
-              source={images.logo}
+              style={[styles.HDlogo, { top: logoTopPosition }]}
+              source={images.HDlogo}
               resizeMode="contain"
             />
           </SafeAreaView>
@@ -85,9 +85,10 @@ const styles = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logo: {
-    width: width * 0.5,
-    height: width * 0.5,
+  HDlogo: {
+    paddingLeft: 27,
+    width: width * 0.7,
+    height: width * 0.65,
     position: 'absolute',
   },
   svgContainer: {

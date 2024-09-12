@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Image,
@@ -27,9 +27,21 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { AppleButton, appleAuth } from '@invertase/react-native-apple-authentication';
+import { relative } from 'path';
 
 // Get the device dimensions for responsive design
 const { width, height } = Dimensions.get('window');
+
+// Calculate responsive font sizes and spacing
+const responsiveFontSize = (size: number) => {
+  const scaleFactor = Math.min(width, height) / 375; // Base scale on iPhone 8 screen width
+  return Math.round(size * scaleFactor);
+};
+
+const responsiveSpacing = (space: number) => {
+  const scaleFactor = Math.min(width, height) / 375;
+  return Math.round(space * scaleFactor);
+};
 
 // Create an animated version of LinearGradient for smooth transitions
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
@@ -41,6 +53,15 @@ const SignUp = () => {
     email: '',
     password: '',
   });
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    }, 100);
+  
+    return () => clearTimeout(timer);
+  }, []);
 
   // State for form validation errors
   const [errors, setErrors] = useState({
@@ -149,10 +170,7 @@ const SignUp = () => {
       } finally {
         setIsSubmitting(false);
       }
-    } else {
-      setError('Please fix the errors before submitting.');
-      setIsSubmitting(false);
-    }
+    } 
   };
 
   const handleGoogleSignUp = async () => {
@@ -253,7 +271,7 @@ const SignUp = () => {
             >
               {/* Header section with logo and title */}
               <View style={styles.headerContainer}>
-                <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+                <Image source={images.HDlogo} style={styles.logo} resizeMode="contain" />
                 <CustomText style={styles.title}>Create Account</CustomText>
               </View>
 
@@ -262,7 +280,7 @@ const SignUp = () => {
                 {/* Username input */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
-                    <Ionicons name="person-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <Ionicons name="person-outline" size={responsiveFontSize(24)} color="#FFFFFF" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       value={form.username}
@@ -278,7 +296,7 @@ const SignUp = () => {
                 {/* Email input */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
-                    <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <Ionicons name="mail-outline" size={responsiveFontSize(24)} color="#FFFFFF" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       value={form.email}
@@ -295,7 +313,7 @@ const SignUp = () => {
                 {/* Password input with visibility toggle */}
                 <View style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
-                    <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
+                    <Ionicons name="lock-closed-outline" size={responsiveFontSize(24)} color="#FFFFFF" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       value={form.password}
@@ -307,7 +325,7 @@ const SignUp = () => {
                     <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
                       <Ionicons
                         name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-                        size={24}
+                        size={responsiveFontSize(24)}
                         color="#FFFFFF"
                         style={styles.passwordIcon}
                       />
@@ -324,7 +342,7 @@ const SignUp = () => {
                   title="Sign Up"
                   handlePress={handleSignUp}
                   isLoading={isSubmitting}
-                  style={styles.signUpButton}
+                  containerStyles={styles.signUpButton}
                 />
 
                 {/* Divider */}
@@ -336,12 +354,12 @@ const SignUp = () => {
 
                 {/* Social sign up buttons */}
                 <TouchableOpacity style={styles.socialButton} onPress={handleAppleSignUp}>
-                  <Ionicons name="logo-apple" size={24} color="#FFFFFF" style={styles.socialIcon} />
+                  <Ionicons name="logo-apple" size={responsiveFontSize(24)} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Apple</CustomText>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignUp}>
-                  <Ionicons name="logo-google" size={24} color="#FFFFFF" style={styles.socialIcon} />
+                  <Ionicons name="logo-google" size={responsiveFontSize(24)} color="#FFFFFF" style={styles.socialIcon} />
                   <CustomText style={styles.socialButtonText}>Sign up with Google</CustomText>
                 </TouchableOpacity>
               </Animated.View>
@@ -361,7 +379,7 @@ const SignUp = () => {
   );
 };
 
-// Styles for the component
+// Updated styles for the component
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
@@ -376,31 +394,35 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 20,
+    paddingHorizontal: responsiveSpacing(20),
+    paddingTop: Platform.OS === 'ios' ? responsiveSpacing(60) : responsiveSpacing(40),
+    paddingBottom: responsiveSpacing(20),
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: responsiveSpacing(30),
   },
   logo: {
-    width: width * 0.3,
-    height: width * 0.3,
-    marginBottom: 20,
+    paddingLeft: responsiveSpacing(18),
+    position: 'relative',
+    width: width * 0.8, // Make it larger by using a larger percentage of the screen width
+    height: width * 0.8 * (9/16), // Maintain the aspect ratio of 16:9 or adjust as needed
+    marginBottom: -responsiveSpacing(20),
+    marginTop: -responsiveSpacing(34),
   },
   title: {
-    fontSize: 28,
+    fontSize: responsiveFontSize(22),
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   formContainer: {
     width: '100%',
     alignItems: 'center',
+    marginTop: -responsiveSpacing(20),
   },
   inputWrapper: {
     width: '100%',
-    marginBottom: 15,
+    marginBottom: responsiveSpacing(15),
   },
   inputContainer: {
     width: '100%',
@@ -411,38 +433,39 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: responsiveSpacing(10),
   },
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 10,
+    fontSize: responsiveFontSize(12),
+    paddingVertical: responsiveSpacing(10),
   },
   passwordIcon: {
-    marginLeft: 10,
+    marginLeft: responsiveSpacing(10),
   },
   errorText: {
     color: '#FFA500',
-    fontSize: 12,
-    marginTop: 5,
-    minHeight: 15,
+    fontSize: responsiveFontSize(12),
+    marginTop: responsiveSpacing(5),
+    minHeight: responsiveSpacing(15),
   },
   generalErrorText: {
     color: '#FFA500',
-    marginBottom: 10,
+    marginBottom: responsiveSpacing(10),
     alignSelf: 'center',
+    fontSize: responsiveFontSize(14),
   },
   signUpButton: {
     width: '100%',
-    marginTop: 10,
-    borderRadius: 25,
+    marginTop: responsiveSpacing(-10),
+    borderRadius: responsiveSpacing(25),
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginVertical: 20,
+    marginVertical: responsiveSpacing(20),
   },
   dividerLine: {
     flex: 1,
@@ -451,47 +474,49 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: '#FFFFFF',
-    paddingHorizontal: 10,
-    fontSize: 14,
+    paddingHorizontal: responsiveSpacing(10),
+    fontSize: responsiveFontSize(14),
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    height: 50,
-    borderRadius: 25,
+    height: responsiveSpacing(50),
+    borderRadius: responsiveSpacing(25),
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 15,
+    marginBottom: responsiveSpacing(15),
   },
   socialIcon: {
-    marginRight: 10,
+    marginRight: responsiveSpacing(10),
   },
   socialButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: responsiveFontSize(16),
     fontWeight: '600',
   },
   appleButton: {
     width: '100%',
-    height: 50,
-    marginVertical: 10,
+    height: responsiveSpacing(50),
+    marginVertical: responsiveSpacing(10),
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: responsiveSpacing(20),
   },
   loginText: {
     color: '#FFFFFF',
+    fontSize: responsiveFontSize(14),
   },
   loginLink: {
-    marginLeft: 5,
+    marginLeft: responsiveSpacing(5),
   },
   loginLinkText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
+    fontSize: responsiveFontSize(14),
   },
 });
 

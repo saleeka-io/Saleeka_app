@@ -12,6 +12,7 @@ import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import barcode from "../assets/icons/barcode.png";
+import history from "../assets/icons/history.png";
 
 
 export default {
@@ -29,4 +30,5 @@ export default {
   eyeHide,
   eye,
   barcode,
+  history,
 };

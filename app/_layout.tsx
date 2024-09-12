@@ -105,7 +105,6 @@ export default function Layout() {
             <Stack.Screen name="ContactUs" options={{ headerShown: false }} />
             <Stack.Screen name="Donation" options={{ headerShown: false }} />
             <Stack.Screen name="ComingSoon" options={{ headerShown: false }} />
-            <Stack.Screen name="HistoryScreen" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
         </AuthWrapper>

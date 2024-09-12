@@ -100,7 +100,7 @@ const HistoryScreen = () => {
           <Image
             source={{ uri: image_url }}
             style={styles.productImage}
-            defaultSource={require('../assets/images/logo.png')}
+            defaultSource={require('../../assets/images/HDlogo.png')}
           />
           <View style={styles.cardContent}>
             <Text style={styles.productName} numberOfLines={1}>{product_name}</Text>

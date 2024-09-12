@@ -13,6 +13,21 @@ const TabsLayout = () => {
       }}
     >
       <Tabs.Screen
+        name="HistoryScreen"
+        options={{
+          title: "History",
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              icon={icons.history}
+              color={color}
+              name="History"
+              focused={focused}
+            />
+          )
+        }}
+      />
+      <Tabs.Screen
         name="scan"
         options={{
           title: "Home",

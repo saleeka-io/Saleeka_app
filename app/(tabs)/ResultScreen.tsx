@@ -49,6 +49,10 @@ const ResultScreen = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const navigateBack = () => {
+    router.back();
+  };
+
   useEffect(() => {
     if (productData) {
       const longLoadingTimeout = setTimeout(() => {
@@ -194,9 +198,14 @@ const ResultScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>
-          Product Analysis by <Text style={styles.titleHighlight}>Saleeka</Text>
-        </Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={navigateBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#2C2C2C" />
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            Product Analysis by <Text style={styles.titleHighlight}>Saleeka</Text>
+          </Text>
+        </View>
 
         {/* Product Image Section */}
         <View style={styles.imageContainer}>
@@ -543,6 +552,23 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginBottom: 30,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+    backgroundColor: '#f1ede1',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3A6A64',
+    marginLeft: 16,
   },
 });
 
