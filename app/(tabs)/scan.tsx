@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
@@ -36,6 +36,57 @@ const BarcodeScanner = () => {
   // Access user context for user-specific operations
   const { user } = useUser();
 
+  // New state for animating the ellipsis
+  const [ellipsis, setEllipsis] = useState('');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Animation for the ellipsis
+  useEffect(() => {
+    const animateEllipsis = () => {
+      setEllipsis(prev => {
+        if (prev === '...') return '';
+        return prev + '.';
+      });
+    };
+
+    const interval = setInterval(animateEllipsis, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Animation for the barcode outline
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [fadeAnim]);
+
+  const renderBarcodeLines = () => {
+    const lines = [];
+    for (let i = 0; i < 7; i++) {
+      lines.push(
+        <View
+          key={i}
+          style={[
+            styles.barcodeLine,
+            { left: `${10 + i * 13}%`, width: i % 2 === 0 ? 20 : 10 }
+          ]}
+        />
+      );
+    }
+    return lines;
+  };
+
   // Request camera permission if not already granted
   useEffect(() => {
     if (!hasPermission) {
@@ -45,11 +96,9 @@ const BarcodeScanner = () => {
 
   // Reset scanned state when the component comes into focus
   // This allows for repeated scanning when navigating back to this screen
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
       setScanned(false);
-    }, [])
-  );
+    }, []);
 
 
   // 028400589871 - Red
@@ -57,10 +106,10 @@ const BarcodeScanner = () => {
   // 742365007071 - Green
 
   // Testing barcode automatically on component mount
-  // useEffect(() => {
-  //   const testBarcode = '74236500707'; // Hardcoded barcode for testing
-  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  // }, []);
+  useEffect(() => {
+    const testBarcode = '74236500707'; // Hardcoded barcode for testing
+    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  }, []);
 
 
   // Main function to handle barcode scanning
@@ -84,11 +133,11 @@ const BarcodeScanner = () => {
           router.back();
         }
         // Navigate to result screen with product data
-        router.replace(`/ResultScreen?productData=${encodedProductData}`);
+        router.push(`/ResultScreen?productData=${encodedProductData}`);
       } else {
         // Navigate to product not found screen if data isn't available
-        router.replace(`/ProductNotFound?barcode=${data}`);
-        Alert.alert('Product Not Found', 'Please help by providing product information.');
+        router.push(`/ProductNotFound?barcode=${data}`);
+        // Alert.alert('Product Not Found', 'Please help by providing product information.');
       }
     }
   };
@@ -206,23 +255,23 @@ const BarcodeScanner = () => {
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
-            'qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code39', 'code128',
+            'ean13', 'ean8', 'upc_a', 'upc_e', 'code39', 'code128',
             'codabar', 'interleaved2of5', 'pdf417', 'aztec', 'dataMatrix',
           ],
         }}
       >
         <View style={styles.overlay}>
-          <View style={styles.scanArea} />
+          <Text style={styles.searchingText}>SEARCHING FOR BARCODE{ellipsis}</Text>
+          <View style={styles.scanArea}>
+            <Animated.View style={[styles.barcodeOutline, { opacity: fadeAnim }]}>
+              {renderBarcodeLines()}
+            </Animated.View>
+          </View>
+          <TouchableOpacity style={styles.flashButton}>
+            <Ionicons name="flash-off" size={24} color="white" />
+          </TouchableOpacity>
         </View>
       </CameraView>
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.switchButton}>
-          <Ionicons name="flash-off" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.switchButton}>
-          <Ionicons name="camera-reverse-outline" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -237,26 +286,43 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   scanArea: {
-    width: 200,
-    height: 200,
+    width: 325,
+    height: 150,
     borderWidth: 2,
     borderColor: 'white',
-    backgroundColor: 'transparent',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  switchButton: {
-    width: 40,
-    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  barcodeOutline: {
+    width: '90%',
+    height: '80%',
+    borderWidth: 4,
+    borderColor: 'white',
+    position: 'relative',
+  },
+  barcodeLine: {
+    position: 'absolute',
+    height: '100%',
+    backgroundColor: 'white',
+  },
+  searchingText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    position: 'absolute',
+    top: 50,
+  },
+  flashButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
   },
   message: {
     color: 'white',
@@ -272,6 +338,17 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontSize: 16,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  switchButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

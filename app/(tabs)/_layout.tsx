@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#232533',
-    height: 100
+    height: 85
   }
 });
 

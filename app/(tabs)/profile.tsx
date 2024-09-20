@@ -33,10 +33,16 @@ const Profile = () => {
     }
   };
 
+  const handleBackArrowPress = (route: string) => {
+    if(route == 'scan-screen'){
+      router.push('/scan')
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => handleBackArrowPress('scan-screen')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>

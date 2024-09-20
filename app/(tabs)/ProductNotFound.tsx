@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  SafeAreaView,
+  Platform,
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,32 +24,39 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useUser } from '../../context/UserContext';
 
-// This component handles the scenario when a product is not found in the database
-// It allows users to submit new product information, including images
+// Get the device dimensions for responsive design
+const { width, height } = Dimensions.get('window');
+
+// Calculate responsive font sizes and spacing
+const responsiveFontSize = (size: number) => {
+  const scaleFactor = Math.min(width, height) / 375; // Base scale on iPhone 8 screen width
+  return Math.round(size * scaleFactor);
+};
+
+const responsiveSpacing = (space: number) => {
+  const scaleFactor = Math.min(width, height) / 375;
+  return Math.round(space * scaleFactor);
+};
+
 const ProductNotFound = () => {
-  // Extract barcode from URL params
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
   
-  // State variables to manage component data and UI
   const [barcodeState, setBarcodeState] = useState(barcode || '');
   const [productImage, setProductImage] = useState<string | null>(null);
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Hooks for navigation and user context
   const router = useRouter();
   const { user } = useUser();
 
   useEffect(() => {
     console.log('Received Barcode:', barcode);
 
-    // Reset state when a new barcode is scanned
     setBarcodeState(barcode || '');
     setProductImage(null);
     setIngredientsImage(null);
 
-    // Request camera permission when component mounts
     const requestPermission = async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setCameraPermission(status === 'granted');
@@ -45,11 +65,9 @@ const ProductNotFound = () => {
     requestPermission();
   }, [barcode]);
 
-  // Function to upload an image to Firebase Storage
   const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
     if (!uri) return null;
   
-    // Adjust URI for iOS to ensure compatibility
     const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
     const storageRef = storage().ref(imageName);
     
@@ -64,7 +82,6 @@ const ProductNotFound = () => {
     }
   };
 
-  // Function to take a photo using the device camera
   const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (cameraPermission === null) {
       return;
@@ -86,7 +103,6 @@ const ProductNotFound = () => {
     }
   };
 
-  // Function to pick an image from the device's photo library
   const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -100,7 +116,6 @@ const ProductNotFound = () => {
     }
   };
 
-  // Function to handle image selection, allowing user to choose between camera and photo library
   const handleImageSelection = (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     Alert.alert(
       "Select Image Source",
@@ -122,9 +137,7 @@ const ProductNotFound = () => {
     );
   };
 
-  // Function to handle form submission
   const handleSubmit = async () => {
-    // Validate that all required fields are filled
     if (!barcodeState || !productImage || !ingredientsImage) {
       Alert.alert('Missing Information', 'Please provide all required information before submitting.');
       return;
@@ -133,7 +146,6 @@ const ProductNotFound = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload images to Firebase Storage
       const productImageUrl = await uploadImage(productImage, `products/${barcodeState}_front.jpg`);
       const ingredientsImageUrl = await uploadImage(ingredientsImage, `products/${barcodeState}_ingredients.jpg`);
 
@@ -141,7 +153,6 @@ const ProductNotFound = () => {
         throw new Error('Failed to upload images');
       }
 
-      // Add new product to Firestore database
       await firestore().collection('products').add({
         userId: user?.uid,
         barcode: barcodeState,
@@ -152,14 +163,12 @@ const ProductNotFound = () => {
         timestamp: firestore.FieldValue.serverTimestamp(),
       });
 
-      // Show success message and navigate back to scan page
       Alert.alert(
         'Submission Successful',
         'Thank you for submitting the product information.',
         [{ 
           text: 'OK', 
           onPress: () => {
-            // Reset state after successful submission
             setBarcodeState('');
             setProductImage(null);
             setIngredientsImage(null);
@@ -175,170 +184,182 @@ const ProductNotFound = () => {
     }
   };
 
-  // Render loading state while waiting for camera permission
   if (cameraPermission === null) {
-    return <Text>Requesting camera permission...</Text>;
+    return <Text style={styles.message}>Requesting camera permission...</Text>;
   }
 
-  // Render permission request if camera access is not granted
   if (!cameraPermission) {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>We need your permission to use the camera</Text>
         <TouchableOpacity onPress={() => Camera.requestCameraPermissionsAsync()} style={styles.button}>
-          <Text style={styles.text}>Grant Permission</Text>
+          <Text style={styles.buttonText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Main render method for the component
   return (
     <SafeAreaView style={styles.container}>
-      {!isSubmitting ? (
-        <View style={styles.content}>
-          {/* App logo */}
-          <Image
-            source={require('../../assets/images/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Product Not Found</Text>
-          <Text style={styles.message}>
-            Result not found. Please upload product info for flag score
-          </Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {!isSubmitting ? (
+            <View style={styles.content}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>Product Not Found</Text>
+              <Text style={styles.message}>
+                Result not found. Please upload product info for flag score
+              </Text>
 
-          {/* Barcode input field */}
-          <TextInput
-            style={styles.input}
-            placeholder="Input Barcode Number"
-            value={barcodeState}
-            onChangeText={text => setBarcodeState(text)}
-            placeholderTextColor="#888"
-          />
+              <TextInput
+                style={styles.input}
+                placeholder="Input Barcode Number"
+                value={barcodeState}
+                onChangeText={text => setBarcodeState(text)}
+                placeholderTextColor="#888"
+              />
 
-          {/* Image selection buttons */}
-          <View style={styles.photoContainer}>
-            <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
-              {productImage ? (
-                <Image source={{ uri: productImage }} style={styles.takenPhoto} />
-              ) : (
-                <>
-                  <Ionicons name="images" size={32} color="#fff" />
-                  <Text style={styles.photoText}>Front of Product</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setIngredientsImage)}>
-              {ingredientsImage ? (
-                <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
-              ) : (
-                <>
-                  <Ionicons name="images" size={32} color="#fff" />
-                  <Text style={styles.photoText}>Image of Ingredients</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+              <View style={styles.photoContainer}>
+                <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
+                  {productImage ? (
+                    <Image source={{ uri: productImage }} style={styles.takenPhoto} />
+                  ) : (
+                    <>
+                      <Ionicons name="images" size={responsiveFontSize(32)} color="#fff" />
+                      <Text style={styles.photoText}>Front of Product</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setIngredientsImage)}>
+                  {ingredientsImage ? (
+                    <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
+                  ) : (
+                    <>
+                      <Ionicons name="images" size={responsiveFontSize(32)} color="#fff" />
+                      <Text style={styles.photoText}>Image of Ingredients</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
 
-          {/* Submit button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitText}>Submit</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        // Loading animation while submitting
-        <View style={styles.centeredContainer}>
-          <LottieView
-            source={avocadoAnimation}
-            autoPlay
-            loop={true}
-            style={styles.avocadoAnimation}
-          />
-          <Text style={styles.thankYouText}>Thank You, your submission is being processed</Text>
-        </View>
-      )}
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.centeredContainer}>
+              <LottieView
+                source={avocadoAnimation}
+                autoPlay
+                loop={true}
+                style={styles.avocadoAnimation}
+              />
+              <Text style={styles.thankYouText}>Thank you, your submission is being processed</Text>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
-// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(58, 106, 100, 0.9)',
   },
-  content: {
+  keyboardAvoidingView: {
     flex: 1,
-    padding: 24,
-    alignItems: 'center',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: responsiveSpacing(20),
+    paddingTop: Platform.OS === 'ios' ? responsiveSpacing(20) : responsiveSpacing(20),
+    paddingBottom: responsiveSpacing(20),
+  },
+  content: {
+    width: '100%',
+    alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: width * 0.5,
+    height: width * 0.5 * (9/16),
+    marginBottom: responsiveSpacing(20),
   },
   title: {
-    fontSize: 28,
+    fontSize: responsiveFontSize(24),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 10,
+    marginBottom: responsiveSpacing(10),
   },
   message: {
-    fontSize: 16,
+    fontSize: responsiveFontSize(14),
     color: '#f1ede1',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: responsiveSpacing(20),
   },
   input: {
     width: '100%',
     borderWidth: 1,
     borderColor: '#f1ede1',
-    padding: 15,
-    borderRadius: 25,
-    marginBottom: 20,
+    padding: responsiveSpacing(15),
+    borderRadius: responsiveSpacing(25),
+    marginBottom: responsiveSpacing(20),
     color: '#fff',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: responsiveFontSize(14),
   },
   photoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: responsiveSpacing(20),
   },
   photoButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(47, 86, 81, 0.8)',
-    padding: 15,
-    borderRadius: 15,
-    marginHorizontal: 5,
-    height: 150,
+    padding: responsiveSpacing(15),
+    borderRadius: responsiveSpacing(15),
+    marginHorizontal: responsiveSpacing(5),
+    height: width * 0.4,
   },
   photoText: {
     color: '#fff',
-    marginTop: 5,
+    marginTop: responsiveSpacing(5),
     textAlign: 'center',
+    fontSize: responsiveFontSize(14),
   },
   takenPhoto: {
     width: '100%',
     height: '100%',
-    borderRadius: 15,
+    borderRadius: responsiveSpacing(15),
   },
   submitButton: {
     backgroundColor: '#f1ede1',
-    padding: 15,
-    borderRadius: 25,
+    padding: responsiveSpacing(15),
+    borderRadius: responsiveSpacing(25),
     width: '100%',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: responsiveSpacing(20),
   },
   submitText: {
     color: '#3A6A64',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: responsiveFontSize(16),
   },
   centeredContainer: {
     flex: 1,
@@ -346,26 +367,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avocadoAnimation: {
-    width: 200,
-    height: 200,
+    width: width * 0.5,
+    height: width * 0.5,
   },
   thankYouText: {
-    marginTop: 20,
-    fontSize: 18,
+    marginTop: responsiveSpacing(20),
+    fontSize: responsiveFontSize(18),
     color: '#fff',
     textAlign: 'center',
   },
   button: {
     backgroundColor: '#f1ede1',
-    padding: 15,
-    borderRadius: 25,
+    padding: responsiveSpacing(15),
+    borderRadius: responsiveSpacing(25),
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: responsiveSpacing(20),
   },
-  text: {
+  buttonText: {
     color: '#3A6A64',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: responsiveFontSize(16),
   },
 });
 
