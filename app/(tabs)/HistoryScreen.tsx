@@ -70,8 +70,8 @@ const HistoryScreen = () => {
       });
     };
   
-    const navigateToProfile = () => {
-      router.push('/profile');
+    const navigateToScan = () => {
+      router.push('/scan');
     };
   
     const getQualityColor = (quality: string) => {
@@ -128,7 +128,7 @@ const HistoryScreen = () => {
         >
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={navigateToProfile} style={styles.backButton}>
+              <TouchableOpacity onPress={navigateToScan} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <Text style={styles.title}>Scan History</Text>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
@@ -39,6 +39,10 @@ const BarcodeScanner = () => {
   // New state for animating the ellipsis
   const [ellipsis, setEllipsis] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // New state for manual input modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState('');
 
   // Animation for the ellipsis
   useEffect(() => {
@@ -96,9 +100,13 @@ const BarcodeScanner = () => {
 
   // Reset scanned state when the component comes into focus
   // This allows for repeated scanning when navigating back to this screen
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
       setScanned(false);
-    }, []);
+      setIsModalVisible(false);
+      setManualBarcode('');
+    }, [])
+  );
 
 
   // 028400589871 - Red
@@ -106,14 +114,15 @@ const BarcodeScanner = () => {
   // 742365007071 - Green
 
   // Testing barcode automatically on component mount
-  useEffect(() => {
-    const testBarcode = '74236500707'; // Hardcoded barcode for testing
-    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  }, []);
+  // useEffect(() => {
+  //   const testBarcode = '74236500707'; // Hardcoded barcode for testing
+  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  // }, []);
 
 
   // Main function to handle barcode scanning
-  const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
+  const handleBarCodeScanned = useCallback(async (scanningResult: { type: string; data: string }) => {
+    if(scanned) return;
     if (!scanned) {
       setScanned(true);  // Prevent multiple scans
       const { data } = scanningResult;
@@ -140,9 +149,20 @@ const BarcodeScanner = () => {
         // Alert.alert('Product Not Found', 'Please help by providing product information.');
       }
     }
-  };
+  },[scanned, router]);
 
-  
+    const handleManualInput = useCallback(async () => {
+    if (manualBarcode.trim() === '') {
+      Alert.alert('Error', 'Please enter a barcode');
+      return;
+    }
+    setIsModalVisible(false);
+    setScanned(true);
+    await handleBarCodeScanned({ type: 'manual', data: manualBarcode});
+    setManualBarcode('');
+  }, [manualBarcode, handleBarCodeScanned]);
+
+
   // Function to save scan history to Firestore
   const saveScanData = async (barcode: string) => {
     if (!user) {
@@ -247,6 +267,41 @@ const BarcodeScanner = () => {
     );
   }
 
+  const renderModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={() => {
+        setManualBarcode('');
+        setIsModalVisible(false);
+      }}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={styles.modalCloseButton} 
+            onPress={() => setIsModalVisible(false)}
+          >
+            <Ionicons name="close" size={24} color="#3A6A64" />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Enter Barcode Manually</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setManualBarcode}
+            value={manualBarcode}
+            placeholder="Enter barcode"
+            keyboardType="numeric"
+            placeholderTextColor="#666"
+          />
+          <TouchableOpacity style={styles.searchButton} onPress={handleManualInput}>
+            <Text style={styles.searchButtonText}>Search</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <CameraView
@@ -260,7 +315,15 @@ const BarcodeScanner = () => {
           ],
         }}
       >
-        <View style={styles.overlay}>
+       <View style={styles.overlay}>
+          {/* Manual input button */}
+          <TouchableOpacity 
+            style={styles.manualInputButton} 
+            onPress={() => setIsModalVisible(true)}
+          >
+            <Ionicons name ="barcode-outline" size={24} color={"white"}/>
+          </TouchableOpacity>
+
           <Text style={styles.searchingText}>SEARCHING FOR BARCODE{ellipsis}</Text>
           <View style={styles.scanArea}>
             <Animated.View style={[styles.barcodeOutline, { opacity: fadeAnim }]}>
@@ -272,6 +335,7 @@ const BarcodeScanner = () => {
           </TouchableOpacity>
         </View>
       </CameraView>
+        {renderModal()}
     </SafeAreaView>
   );
 };
@@ -283,6 +347,72 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#f1ede1',
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    alignSelf: 'flex-end',
+    padding: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3A6A64',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#3A6A64',
+    borderRadius: 25,
+    padding: 15,
+    marginBottom: 20,
+    width: '100%',
+    fontSize: 16,
+    color: '#3A6A64',
+    backgroundColor: '#fff',
+  },
+  searchButton: {
+    backgroundColor: '#3A6A64',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  searchButtonText: {
+    color: '#f1ede1',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  manualInputButton: {
+    position: 'absolute',
+    top: 38,
+    left: 20,
+    padding: 10,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#FF3B30',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -328,12 +458,6 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     paddingBottom: 10,
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
   },
   text: {
     color: 'white',

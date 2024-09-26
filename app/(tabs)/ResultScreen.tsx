@@ -50,7 +50,7 @@ const ResultScreen = () => {
   const [imageError, setImageError] = useState(false);
 
   const navigateBack = () => {
-    router.back();
+    router.push('/scan');
   };
 
   useEffect(() => {
