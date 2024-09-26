@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Buffer } from 'buffer';
 
 // Define the structure of product data
-// This helps in maintaining consistent data types throughout the component
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -47,10 +46,7 @@ const BarcodeScanner = () => {
   // Animation for the ellipsis
   useEffect(() => {
     const animateEllipsis = () => {
-      setEllipsis(prev => {
-        if (prev === '...') return '';
-        return prev + '.';
-      });
+      setEllipsis(prev => (prev === '...' ? '' : prev + '.'));
     };
 
     const interval = setInterval(animateEllipsis, 500);
@@ -61,16 +57,8 @@ const BarcodeScanner = () => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
   }, [fadeAnim]);
@@ -98,16 +86,15 @@ const BarcodeScanner = () => {
     }
   }, [hasPermission]);
 
-  // Reset scanned state when the component comes into focus
-  // This allows for repeated scanning when navigating back to this screen
+  // Reset scanned state and modal visibility when the component comes into focus
   useFocusEffect(
     useCallback(() => {
+      console.log('Focus effect triggered: Resetting scanned and modal visibility.');
       setScanned(false);
-      setIsModalVisible(false);
+      setIsModalVisible(false);  // Ensure the modal is hidden when returning
       setManualBarcode('');
     }, [])
   );
-
 
   // 028400589871 - Red
   // 0737628064502 - Yellow
@@ -115,53 +102,47 @@ const BarcodeScanner = () => {
 
   // Testing barcode automatically on component mount
   // useEffect(() => {
-  //   const testBarcode = '74236500707'; // Hardcoded barcode for testing
+  //   const testBarcode = '742365007071'; // Hardcoded barcode for testing
   //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   // }, []);
 
-
   // Main function to handle barcode scanning
-  const handleBarCodeScanned = useCallback(async (scanningResult: { type: string; data: string }) => {
-    if(scanned) return;
+  const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
-      setScanned(true);  // Prevent multiple scans
+      setScanned(true);
       const { data } = scanningResult;
+      console.log(`Barcode scanned: Type: ${scanningResult.type}, Data: ${data}`);
+      
       const productData = await fetchProductData(data);
-
+      
       if (productData) {
-        // Save scan data for user history
-        saveScanData(data);
-        // Encode product data for URL parameter
+        console.log('Product found. Navigating to ResultScreen.');
+        await saveScanData(data);
         const encodedProductData = Buffer.from(JSON.stringify(productData)).toString('base64');
-        
-        // Navigation logic to ensure proper stack management
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
-        while (router.canGoBack()) {
-          router.back();
-        }
-        // Navigate to result screen with product data
-        router.push(`/ResultScreen?productData=${encodedProductData}`);
+        router.replace(`/ResultScreen?productData=${encodedProductData}`);
       } else {
-        // Navigate to product not found screen if data isn't available
-        router.push(`/ProductNotFound?barcode=${data}`);
-        // Alert.alert('Product Not Found', 'Please help by providing product information.');
+        console.log('Product not found. Navigating to ProductNotFound.');
+        router.replace(`/ProductNotFound?barcode=${data}`);
       }
+    } else {
+      console.log('Scan skipped as the barcode was already scanned.');
     }
-  },[scanned, router]);
+  };
 
-    const handleManualInput = useCallback(async () => {
+  const handleManualInput = async () => {
     if (manualBarcode.trim() === '') {
+      console.log('Error: Barcode input is empty.');
       Alert.alert('Error', 'Please enter a barcode');
       return;
     }
-    setIsModalVisible(false);
+  
+    console.log('Manual barcode entered:', manualBarcode);
+    setIsModalVisible(false);  // Close the modal
     setScanned(true);
-    await handleBarCodeScanned({ type: 'manual', data: manualBarcode});
+  
+    await handleBarCodeScanned({ type: 'manual', data: manualBarcode });
     setManualBarcode('');
-  }, [manualBarcode, handleBarCodeScanned]);
-
+  };
 
   // Function to save scan history to Firestore
   const saveScanData = async (barcode: string) => {
@@ -273,6 +254,7 @@ const BarcodeScanner = () => {
       transparent={true}
       visible={isModalVisible}
       onRequestClose={() => {
+        console.log('Modal closed by back button or swipe gesture.');
         setManualBarcode('');
         setIsModalVisible(false);
       }}
@@ -335,7 +317,7 @@ const BarcodeScanner = () => {
           </TouchableOpacity>
         </View>
       </CameraView>
-        {renderModal()}
+      {renderModal()}
     </SafeAreaView>
   );
 };
@@ -396,9 +378,10 @@ const styles = StyleSheet.create({
   },
   manualInputButton: {
     position: 'absolute',
-    top: 38,
+    bottom: 15,
     left: 20,
-    padding: 10,
+    padding: 25,
+    zIndex: 1000,
   },
   button: {
     backgroundColor: '#007AFF',
