@@ -27,12 +27,6 @@ const Profile = () => {
     }
   };
 
-  const handleHistoryPress = (route: string) => {
-    if(route === 'history-screen'){
-      router.push('/HistoryScreen')
-    }
-  };
-
   const handleBackArrowPress = (route: string) => {
     if(route == 'scan-screen'){
       router.push('/scan')
@@ -59,11 +53,6 @@ const Profile = () => {
       </View>
 
       <View style={styles.section}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => handleHistoryPress('history-screen')}>
-          <Ionicons name="calendar-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Scan History</Text>
-          <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="warning-outline" size={24} color="#3A6A64" />
           <Text style={styles.menuItemText}>Allergies</Text>

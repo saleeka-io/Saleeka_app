@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Buffer } from 'buffer';
 
 // Define the structure of product data
-// This helps in maintaining consistent data types throughout the component
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -40,13 +39,14 @@ const BarcodeScanner = () => {
   const [ellipsis, setEllipsis] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // New state for manual input modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState('');
+
   // Animation for the ellipsis
   useEffect(() => {
     const animateEllipsis = () => {
-      setEllipsis(prev => {
-        if (prev === '...') return '';
-        return prev + '.';
-      });
+      setEllipsis(prev => (prev === '...' ? '' : prev + '.'));
     };
 
     const interval = setInterval(animateEllipsis, 500);
@@ -57,16 +57,8 @@ const BarcodeScanner = () => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
   }, [fadeAnim]);
@@ -94,55 +86,64 @@ const BarcodeScanner = () => {
     }
   }, [hasPermission]);
 
-  // Reset scanned state when the component comes into focus
-  // This allows for repeated scanning when navigating back to this screen
-  useEffect(() => {
+  // Reset scanned state and modal visibility when the component comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Focus effect triggered: Resetting scanned and modal visibility.');
       setScanned(false);
-    }, []);
-
+      setIsModalVisible(false);  // Ensure the modal is hidden when returning
+      setManualBarcode('');
+    }, [])
+  );
 
   // 028400589871 - Red
   // 0737628064502 - Yellow
   // 742365007071 - Green
 
   // Testing barcode automatically on component mount
-  useEffect(() => {
-    const testBarcode = '74236500707'; // Hardcoded barcode for testing
-    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  }, []);
-
+  // useEffect(() => {
+  //   const testBarcode = '742365007071'; // Hardcoded barcode for testing
+  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  // }, []);
 
   // Main function to handle barcode scanning
   const handleBarCodeScanned = async (scanningResult: { type: string; data: string }) => {
     if (!scanned) {
-      setScanned(true);  // Prevent multiple scans
+      setScanned(true);
       const { data } = scanningResult;
+      console.log(`Barcode scanned: Type: ${scanningResult.type}, Data: ${data}`);
+      
       const productData = await fetchProductData(data);
-
+      
       if (productData) {
-        // Save scan data for user history
-        saveScanData(data);
-        // Encode product data for URL parameter
+        console.log('Product found. Navigating to ResultScreen.');
+        await saveScanData(data);
         const encodedProductData = Buffer.from(JSON.stringify(productData)).toString('base64');
-        
-        // Navigation logic to ensure proper stack management
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
-        while (router.canGoBack()) {
-          router.back();
-        }
-        // Navigate to result screen with product data
-        router.push(`/ResultScreen?productData=${encodedProductData}`);
+        router.replace(`/ResultScreen?productData=${encodedProductData}`);
       } else {
-        // Navigate to product not found screen if data isn't available
-        router.push(`/ProductNotFound?barcode=${data}`);
-        // Alert.alert('Product Not Found', 'Please help by providing product information.');
+        console.log('Product not found. Navigating to ProductNotFound.');
+        router.replace(`/ProductNotFound?barcode=${data}`);
       }
+    } else {
+      console.log('Scan skipped as the barcode was already scanned.');
     }
   };
 
+  const handleManualInput = async () => {
+    if (manualBarcode.trim() === '') {
+      console.log('Error: Barcode input is empty.');
+      Alert.alert('Error', 'Please enter a barcode');
+      return;
+    }
   
+    console.log('Manual barcode entered:', manualBarcode);
+    setIsModalVisible(false);  // Close the modal
+    setScanned(true);
+  
+    await handleBarCodeScanned({ type: 'manual', data: manualBarcode });
+    setManualBarcode('');
+  };
+
   // Function to save scan history to Firestore
   const saveScanData = async (barcode: string) => {
     if (!user) {
@@ -247,6 +248,42 @@ const BarcodeScanner = () => {
     );
   }
 
+  const renderModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={() => {
+        console.log('Modal closed by back button or swipe gesture.');
+        setManualBarcode('');
+        setIsModalVisible(false);
+      }}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={styles.modalCloseButton} 
+            onPress={() => setIsModalVisible(false)}
+          >
+            <Ionicons name="close" size={24} color="#3A6A64" />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Enter Barcode Manually</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setManualBarcode}
+            value={manualBarcode}
+            placeholder="Enter barcode"
+            keyboardType="numeric"
+            placeholderTextColor="#666"
+          />
+          <TouchableOpacity style={styles.searchButton} onPress={handleManualInput}>
+            <Text style={styles.searchButtonText}>Search</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <CameraView
@@ -260,7 +297,15 @@ const BarcodeScanner = () => {
           ],
         }}
       >
-        <View style={styles.overlay}>
+       <View style={styles.overlay}>
+          {/* Manual input button */}
+          <TouchableOpacity 
+            style={styles.manualInputButton} 
+            onPress={() => setIsModalVisible(true)}
+          >
+            <Ionicons name ="barcode-outline" size={24} color={"white"}/>
+          </TouchableOpacity>
+
           <Text style={styles.searchingText}>SEARCHING FOR BARCODE{ellipsis}</Text>
           <View style={styles.scanArea}>
             <Animated.View style={[styles.barcodeOutline, { opacity: fadeAnim }]}>
@@ -272,6 +317,7 @@ const BarcodeScanner = () => {
           </TouchableOpacity>
         </View>
       </CameraView>
+      {renderModal()}
     </SafeAreaView>
   );
 };
@@ -283,6 +329,73 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#f1ede1',
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    alignSelf: 'flex-end',
+    padding: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3A6A64',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#3A6A64',
+    borderRadius: 25,
+    padding: 15,
+    marginBottom: 20,
+    width: '100%',
+    fontSize: 16,
+    color: '#3A6A64',
+    backgroundColor: '#fff',
+  },
+  searchButton: {
+    backgroundColor: '#3A6A64',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  searchButtonText: {
+    color: '#f1ede1',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  manualInputButton: {
+    position: 'absolute',
+    bottom: 15,
+    left: 20,
+    padding: 25,
+    zIndex: 1000,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#FF3B30',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -328,12 +441,6 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     paddingBottom: 10,
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
   },
   text: {
     color: 'white',
