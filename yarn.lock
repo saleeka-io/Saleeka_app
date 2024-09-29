@@ -3269,6 +3269,11 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
+"@revenuecat/purchases-typescript-internal@13.2.1":
+  version "13.2.1"
+  resolved "https://registry.npmjs.org/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-13.2.1.tgz"
+  integrity sha512-UezHcpV653EJPWcgVedC7uRsocdCkJ2/edJjPBomSJC/7A+qmdg62w8tTDiOUFFaFFDcQfHbiHlJluGUWOogAQ==
+
 "@rnx-kit/chromium-edge-launcher@^1.0.0":
   version "1.0.0"
   resolved "https://registry.npmjs.org/@rnx-kit/chromium-edge-launcher/-/chromium-edge-launcher-1.0.0.tgz"
@@ -8628,6 +8633,13 @@ react-native-helmet-async@2.0.4:
     react-fast-compare "^3.2.2"
     shallowequal "^1.1.0"
 
+react-native-purchases@^8.2.1:
+  version "8.2.1"
+  resolved "https://registry.npmjs.org/react-native-purchases/-/react-native-purchases-8.2.1.tgz"
+  integrity sha512-oIfyR2N4zq/nagGw5vfn2QuZZ+DIJUoOwMYONtWxK0Vm011/WGAviWT5yxzfervGYk6w6cN4/kGe/wxgg6W2ZQ==
+  dependencies:
+    "@revenuecat/purchases-typescript-internal" "13.2.1"
+
 react-native-reanimated@*, react-native-reanimated@~3.10.1:
   version "3.10.1"
   resolved "https://registry.npmjs.org/react-native-reanimated/-/react-native-reanimated-3.10.1.tgz"
@@ -8743,7 +8755,7 @@ react-test-renderer@18.2.0:
     react-shallow-renderer "^16.15.0"
     scheduler "^0.23.0"
 
-react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8 || ^17.0 || ^18.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0", react@^18.0.0, react@^18.2.0, react@>=16.8, react@>=17.0.0, react@18.2.0:
+react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8 || ^17.0 || ^18.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0", react@^18.0.0, react@^18.2.0, "react@>= 16.6.3", react@>=16.8, react@>=17.0.0, react@18.2.0:
   version "18.2.0"
   resolved "https://registry.npmjs.org/react/-/react-18.2.0.tgz"
   integrity sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==

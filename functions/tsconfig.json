@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2017",
+    "skipLibCheck": true,  // Add this line to avoid checking library types
+    "lib": ["esnext"]      // Exclude "dom" to avoid conflicts with React Native
+  },
+  "compileOnSave": true,
+  "include": [
+    "src"
+  ]
+}

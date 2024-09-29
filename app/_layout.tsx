@@ -11,6 +11,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
+import Purchases from 'react-native-purchases'; // Import the RevenueCat SDK
+import { Platform } from 'react-native';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -68,6 +71,14 @@ export default function Layout() {
           offlineAccess: true, // Enables offline access to get idToken
           scopes: ['email', 'profile'],
         });
+
+        // RevenueCat initialization
+        const apiKey = Platform.OS === 'ios'
+          ? 'appl_vgMqpWwBaNITMqVriMNVPMMJeCd' // Replace with your iOS RevenueCat API key
+          : 'your_android_api_key'; // Replace with your Android RevenueCat API key
+
+        Purchases.setDebugLogsEnabled(true); // Enable debug logs for testing
+        await Purchases.configure({ apiKey });
 
         // Any other initialization logic can go here
       } catch (e) {
