@@ -154,7 +154,7 @@ const ResultScreen = () => {
     )
   ) as BannedIngredient[];
 
-  // Calculate the product rating based on banned ingredients
+ // Calculate the product rating based on banned ingredients
   const calculateRating = (
     bannedIngredients: BannedIngredient[]
   ): { rating: string; color: string; fillPercentage: number; animation: any } => {
@@ -178,7 +178,6 @@ const ResultScreen = () => {
   };
 
   const { rating, color, fillPercentage, animation } = calculateRating(bannedIngredients);
-
   // Navigation function to the score screen
   const navigateToScoreScreen = () => {
     router.push('/score');
