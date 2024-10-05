@@ -586,6 +586,7 @@ import redXAnimation from '../../assets/lottie/RedX.json';
 import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
 import cautionAnimation from '../../assets/lottie/Caution.json';
 import loadingAnimation from '../../assets/lottie/Loading.json';
+import CustomText from '@/components/CustomText';
 
 // Define the structure of the product data
 interface ProductData {
@@ -697,8 +698,8 @@ const ResultScreen = () => {
               style={styles.loadingAnimation}
             />
           </View>
-          <Text style={styles.loadingTitle}>Loading Results</Text>
-          <Text style={styles.loadingText}>{loadingText}</Text>
+          <CustomText fontWeight="medium"style={styles.loadingTitle}>Loading Results</CustomText>
+          <CustomText  style={styles.loadingText}>{loadingText}</CustomText>
         </View>
       </SafeAreaView>
     );
@@ -736,9 +737,9 @@ const ResultScreen = () => {
           <TouchableOpacity onPress={navigateBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#2C2C2C" />
           </TouchableOpacity>
-          <Text style={styles.title}>
+          <CustomText style={styles.title}>
             Product Analysis by <Text style={styles.titleHighlight}>Saleeka</Text>
-          </Text>
+          </CustomText>
         </View>
 
         {/* Product Image Section */}
@@ -753,7 +754,7 @@ const ResultScreen = () => {
 ) : (
   <View style={styles.imageFallbackContainer}>
     <Ionicons name="image-outline" size={100} color="#D32F2F" />
-    <Text style={styles.imageFallbackText}>Image not found</Text>
+    <CustomText style={styles.imageFallbackText}>Image not found</CustomText>
   </View>
 )}
 
@@ -778,8 +779,8 @@ const ResultScreen = () => {
             <View style={styles.productCard}>
               {/* Product Name */}
               <View style={styles.productInfo}>
-                <Text style={styles.label}>Product Name:</Text>
-                <Text style={styles.productName}>{parsedProduct.product_name}</Text>
+                <CustomText  style={styles.label}>Product Name:</CustomText>
+                <CustomText fontWeight='medium' style={styles.productName}>{parsedProduct.product_name}</CustomText>
               </View>
 
               {/* Rating Bar */}
@@ -788,23 +789,23 @@ const ResultScreen = () => {
                   <View style={styles.ratingIndicator}>
                     <Animated.View style={[styles.ratingFill, { width, backgroundColor: ratingInfo?.color }]} />
                   </View>
-                  <Text style={[styles.rating, { color: ratingInfo?.color }]}>
+                  <CustomText style={[styles.rating, { color: ratingInfo?.color }]}>
                     Product Rating: {ratingInfo?.rating}
-                  </Text>
+                  </CustomText>
                 </View>
               </View>
 
               {/* Warning or Excellent Section */}
               {ratingInfo?.rating === 'Clean' ? (
                 <View style={styles.excellentSection}>
-                  <Text style={styles.excellentTitle}>Excellent Choice!</Text>
-                  <Text style={styles.excellentText}>
+                  <CustomText fontWeight="bold"style={styles.excellentTitle}>Excellent Choice!</CustomText>
+                  <CustomText style={styles.excellentText}>
                     This product doesn't contain any harmful ingredients from our database.
-                  </Text>
+                  </CustomText>
                 </View>
               ) : (
                 <View style={styles.warningSection}>
-                  <Text style={styles.warningTitle}>Warning! This product contains:</Text>
+                  <CustomText style={styles.warningTitle}>Warning! This product contains:</CustomText>
                   {/* Show ingredients flagged in the banned ingredients list */}
                   {bannedIngredientsData.bannedIngredients
                     .filter((ingredient) =>
@@ -813,25 +814,25 @@ const ResultScreen = () => {
                       )
                     )
                     .map((ingredient) => (
-                      <Text key={ingredient.name} style={styles.warningText}>
+                      <CustomText key={ingredient.name} style={styles.warningText}>
                         {ingredient.name} ({ingredient.reason})
-                      </Text>
+                      </CustomText>
                     ))}
                 </View>
               )}
 
               {/* Nutritional Information */}
               <View style={styles.nutritionalInfo}>
-                <Text style={styles.nutritionalTitle}>Per Serving:</Text>
-                <Text style={styles.nutritionalText}>Calories(Kcal): {parsedProduct.calories?.toFixed(1) || 'N/A'}</Text>
-                <Text style={styles.nutritionalText}>Protein: {parsedProduct.protein?.toFixed(1) || 'N/A'}g</Text>
-                <Text style={styles.nutritionalText}>Carbs: {parsedProduct.carbs?.toFixed(1) || 'N/A'}g</Text>
-                <Text style={styles.nutritionalText}>Fats: {parsedProduct.fat?.toFixed(1) || 'N/A'}g</Text>
+                <CustomText fontWeight="medium" style={styles.nutritionalTitle}>Per Serving:</CustomText>
+                <CustomText style={styles.nutritionalText}>Calories(Kcal): {parsedProduct.calories?.toFixed(1) || 'N/A'}</CustomText>
+                <CustomText style={styles.nutritionalText}>Protein: {parsedProduct.protein?.toFixed(1) || 'N/A'}g</CustomText>
+                <CustomText style={styles.nutritionalText}>Carbs: {parsedProduct.carbs?.toFixed(1) || 'N/A'}g</CustomText>
+                <CustomText style={styles.nutritionalText}>Fats: {parsedProduct.fat?.toFixed(1) || 'N/A'}g</CustomText>
               </View>
 
               {/* Additives Section (Expandable) */}
               <TouchableOpacity style={styles.section} onPress={toggleAdditives}>
-                <Text style={styles.sectionTitle}>Additives</Text>
+                <CustomText fontWeight="medium" style={styles.sectionTitle}>Additives</CustomText>
                 <Ionicons name={showAdditives ? "chevron-up" : "chevron-down"} size={24} color="#2C2C2C" />
               </TouchableOpacity>
 
@@ -839,19 +840,19 @@ const ResultScreen = () => {
                 <View style={styles.additivesContent}>
                   {additives.length > 0 ? (
                     additives.map((additive, index) => (
-                      <Text key={index} style={styles.additiveText}>
+                      <CustomText  key={index} style={styles.additiveText}>
                         {additive.code} - {additive.name}
-                      </Text>
+                      </CustomText>
                     ))
                   ) : (
-                    <Text style={styles.additiveText}>No additives found</Text>
+                    <CustomText  style={styles.additiveText}>No additives found</CustomText>
                   )}
                 </View>
               )}
 
               {/* Health Score Button */}
               <TouchableOpacity style={styles.healthScoreButton} onPress={() => router.push('/score')}>
-                <Text style={styles.healthScoreText}>View Health Score Scale</Text>
+                <CustomText  style={styles.healthScoreText}>View Health Score Scale</CustomText>
               </TouchableOpacity>
             </View>
           </LinearGradient>

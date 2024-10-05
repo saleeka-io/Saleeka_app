@@ -221,6 +221,7 @@ import firestore from '@react-native-firebase/firestore';
 import { useUser } from '../../context/UserContext';
 import { Buffer } from 'buffer';
 import { RatingService, Rating } from '../../components/RatingService';
+import CustomText from '@/components/CustomText';
 
 interface ProductData {
   product_name: string;
@@ -363,10 +364,10 @@ const HistoryScreen = () => {
       <TouchableOpacity style={styles.historyCard} onPress={() => navigateToResult(item)}>
         <Image source={{ uri: image_url || undefined }} style={styles.productImage} />
         <View style={styles.cardContent}>
-          <Text style={styles.productName}>{product_name}</Text>
-          <Text style={[styles.qualityText, { color: rating.color }]}>
+          <CustomText fontWeight="medium" style={styles.productName}>{product_name}</CustomText>
+          <CustomText style={[styles.qualityText, { color: rating.color }]}>
             Quality: {rating.rating}
-          </Text>
+          </CustomText>
         </View>
       </TouchableOpacity>
     );
