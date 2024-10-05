@@ -217,22 +217,22 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { CacheService } from '../../components/CacheService';
-import { RatingService } from '../../components/RatingService';
 import firestore from '@react-native-firebase/firestore';
 import { useUser } from '../../context/UserContext';
 import { Buffer } from 'buffer';
+import { RatingService, Rating } from '../../components/RatingService';
 
 interface ProductData {
   product_name: string;
-  ingredients: string[] | null;
-  additives: { code: string; name: string }[] | null;
   calories: number | null;
   protein: number | null;
   carbs: number | null;
   fat: number | null;
   image_url: string | null;
+  ingredients: string[] | null;
+  additives: { code: string; name: string }[] | null;
+  rating: Rating;
 }
-
 const HistoryScreen = () => {
   const router = useRouter();
   const { user } = useUser(); // Fetch the user from your AuthProvider
@@ -309,7 +309,10 @@ const HistoryScreen = () => {
         image_url: productData.productImageUrl || null,
         ingredients: ingredients,
         additives: productData.additives || [],
+        rating: RatingService.calculateRating(ingredients),  // Corrected line
       };
+      
+      
       await CacheService.addToCache(barcode, product);  // Add to cache for future
       return product;
     }
@@ -334,7 +337,9 @@ const HistoryScreen = () => {
         image_url: data.product.image_url || null,
         ingredients: data.product.ingredients_text?.split(', ') || [],
         additives: additives,
+        rating: RatingService.calculateRating(data.product.ingredients_text?.split(', ') || []), // Corrected line
       };
+      
       await CacheService.addToCache(barcode, product);  // Add to cache
       return product;
     }

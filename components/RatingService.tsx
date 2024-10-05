@@ -1,5 +1,10 @@
 import bannedIngredientsData from '.././app/bannedIngredients.json';
+// Import the Lottie animations
+import checkmarkAnimation from '../assets/lottie/Checkmark.json';
+import redXAnimation from '../assets/lottie/RedX.json';
+import cautionAnimation from '../assets/lottie/Caution.json';
 
+// Define the structure of a banned ingredient
 interface BannedIngredient {
   name: string;
   casNumber: string;
@@ -11,11 +16,13 @@ export interface Rating {
   rating: string;
   color: string;
   fillPercentage: number;
-  animation: any;
+  // Removed animation property from here
 }
 
 export class RatingService {
   static calculateRating(ingredients: string[]): Rating {
+    console.log('RatingService called with ingredients:', ingredients); // Log the received ingredients
+
     const bannedIngredients: BannedIngredient[] = bannedIngredientsData.bannedIngredients
       .filter((ingredient) =>
         ingredients.some((prodIngredient) =>
@@ -27,8 +34,12 @@ export class RatingService {
         severity: ingredient.severity as 'red' | 'yellow' | 'green', // Cast the severity to the correct union type
       }));
 
+    console.log('Filtered banned ingredients:', bannedIngredients); // Log the filtered banned ingredients
+
     if (bannedIngredients.length === 0) {
-      return { rating: 'Clean', color: '#4CAF50', fillPercentage: 100, animation: 'checkmarkAnimation' };
+      const cleanRating = { rating: 'Clean', color: '#4CAF50', fillPercentage: 100 };
+      console.log('Output rating (Clean):', cleanRating); // Log the result if the product is clean
+      return cleanRating;
     }
 
     const severityCount = {
@@ -37,12 +48,17 @@ export class RatingService {
       green: bannedIngredients.filter((i) => i.severity === 'green').length,
     };
 
+    let resultRating: Rating;
+
     if (severityCount.red > 0) {
-      return { rating: 'Poor', color: '#D32F2F', fillPercentage: 25, animation: 'redXAnimation' };
+      resultRating = { rating: 'Poor', color: '#D32F2F', fillPercentage: 25 };
     } else if (severityCount.yellow > 0) {
-      return { rating: 'Fair', color: '#FFA000', fillPercentage: 50, animation: 'cautionAnimation' };
+      resultRating = { rating: 'Fair', color: '#FFA000', fillPercentage: 50 };
     } else {
-      return { rating: 'Good', color: '#4CAF50', fillPercentage: 75, animation: 'checkmarkAnimation' };
+      resultRating = { rating: 'Good', color: '#4CAF50', fillPercentage: 75 };
     }
+
+    console.log('Output rating:', resultRating); // Log the final output rating
+    return resultRating;
   }
 }
