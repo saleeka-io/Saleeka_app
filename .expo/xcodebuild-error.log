@@ -1,3 +1,9 @@
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:iOS Simulator, id:210859F9-7AB3-4A2A-A93E-68A71512242B, OS:17.4, name:iPhone 15 Pro }
 { platform:iOS Simulator, id:210859F9-7AB3-4A2A-A93E-68A71512242B, OS:17.4, name:iPhone 15 Pro }
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftEmitModule normal x86_64 Emitting\ module\ for\ testapp (in target 'testapp' from project 'testapp')
+(1 failure)
