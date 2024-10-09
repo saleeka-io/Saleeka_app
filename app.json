@@ -14,7 +14,8 @@
     },
     "ios": {
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow you to upload profile pictures and other media."
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow you to upload profile pictures and other media.",
+        "NSCameraUsageDescription": "This app needs access to your camera to scan barcodes."
       },
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -47,6 +48,17 @@
           "ios": {
             "useFrameworks": "static"
           }
+        }
+      ],
+      [
+        "react-native-permissions",
+        {
+          "ios": [
+            "CAMERA"
+          ],
+          "android": [
+            "android.permission.CAMERA"
+          ]
         }
       ]
     ],

@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, Button, Platform } from 'react-native';
-import { RNCamera, BarCodeReadEvent } from 'react-native-camera'; // For camera access
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions'; // For permissions
-import BarcodeScanning from '@react-native-ml-kit/barcode-scanning'; // ML Kit barcode scanning
+import React, { useState, useEffect, useRef } from 'react';
+import { Text, View, Button, Platform, StyleSheet } from 'react-native';
+import { RNCamera } from 'react-native-camera';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import BarcodeScanning from '@react-native-ml-kit/barcode-scanning';
+
+interface BarCodeEvent {
+  data: string;
+  type: string;
+}
 
 export default function BarcodeScanner() {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const cameraRef = useRef<RNCamera | null>(null);
 
-  // Request camera permission on mount
   useEffect(() => {
     (async () => {
       const result = await requestCameraPermission();
@@ -16,7 +21,6 @@ export default function BarcodeScanner() {
     })();
   }, []);
 
-  // Function to request camera permissions based on the platform
   const requestCameraPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'ios') {
       const result = await request(PERMISSIONS.IOS.CAMERA);
@@ -28,16 +32,24 @@ export default function BarcodeScanner() {
     return false;
   };
 
-  // Function to handle when a barcode is scanned
-  const handleBarCodeScanned = async (barcodeData: BarCodeReadEvent) => {
-    if (!scannedBarcode) { // Avoid multiple scans
+  const handleBarCodeScanned = async ({ data, bounds, format }: BarCodeEvent) => {
+    if (!scannedBarcode && cameraRef.current) {
       try {
-        const barcodes = await BarcodeScanning.scan(barcodeData.data); // Process the image using ML Kit
-        if (barcodes.length > 0) {
-          setScannedBarcode(barcodes[0].value); // Get the first barcode scanned and set it
+        const { uri } = await cameraRef.current.takePictureAsync({ quality: 0.5 });
+        const results = await BarcodeScanning.scan(uri);
+        
+        if (results.length > 0) {
+          setScannedBarcode(results[0].value);
+          console.log(`ML Kit scanned barcode: ${results[0].value}`);
+        } else {
+          // Fallback to RNCamera result if ML Kit doesn't detect a barcode
+          setScannedBarcode(data);
+          console.log(`RNCamera scanned barcode: ${data}`);
         }
       } catch (error) {
-        console.error("Barcode scanning failed:", error);
+        console.error("Error scanning barcode:", error);
+        // Fallback to RNCamera result if ML Kit fails
+        setScannedBarcode(data);
       }
     }
   };
@@ -45,28 +57,50 @@ export default function BarcodeScanner() {
   if (hasPermission === null) {
     return <Text>Requesting camera permission...</Text>;
   }
-
   if (hasPermission === false) {
     return <Text>No access to camera</Text>;
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={styles.container}>
       {!scannedBarcode ? (
         <RNCamera
-          style={{ width: '100%', height: '80%' }}
+          ref={cameraRef}
+          style={styles.camera}
           type={RNCamera.Constants.Type.back}
-          onBarCodeRead={handleBarCodeScanned} // Corrected prop name
+          onBarCodeRead={handleBarCodeScanned}
+          captureAudio={false}
         />
       ) : (
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 18 }}>Scanned Barcode:</Text>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', marginVertical: 20 }}>
-            {scannedBarcode}
-          </Text>
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultText}>Scanned Barcode:</Text>
+          <Text style={styles.barcodeText}>{scannedBarcode}</Text>
           <Button title="Scan Again" onPress={() => setScannedBarcode(null)} />
         </View>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  camera: {
+    width: '100%',
+    height: '80%',
+  },
+  resultContainer: {
+    alignItems: 'center',
+  },
+  resultText: {
+    fontSize: 18,
+  },
+  barcodeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 20,
+  },
+});
