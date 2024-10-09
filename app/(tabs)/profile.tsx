@@ -39,10 +39,10 @@ const Profile = () => {
         <TouchableOpacity onPress={() => handleBackArrowPress('scan-screen')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Settings</Text>
       </View>
       
-      <View style={styles.profileSection}>
+      {/* <View style={styles.profileSection}>
         <Image
           source={require('assets/images/profile.png')}
           style={styles.profileImage}
@@ -50,7 +50,7 @@ const Profile = () => {
         <TouchableOpacity style={styles.editButton}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>

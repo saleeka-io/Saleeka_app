@@ -1,15 +1,30 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import icons from '../../constants/icons';
 import TabIcon from '../../components/TabIcon'; // Ensure correct import path
+
+const { height: screenHeight } = Dimensions.get('window');
+
+const getTabBarHeight = () => {
+  if (screenHeight > 800) {
+    // For larger screens like iPhone Pro Max
+    return 85;
+  } else if (screenHeight > 700) {
+    // For medium screens like iPhone 11/12/13/14
+    return 75;
+  } else {
+    // For smaller screens like iPhone SE
+    return 65;
+  }
+};
 
 const TabsLayout = () => {
   return (
     <Tabs
       screenOptions={{
         tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar
+        tabBarStyle: [styles.tabBar, { height: getTabBarHeight() }],
       }}
     >
       <Tabs.Screen
@@ -21,10 +36,10 @@ const TabsLayout = () => {
             <TabIcon
               icon={icons.history}
               color={color}
-              name="History"
+              name={''}
               focused={focused}
             />
-          )
+          ),
         }}
       />
       <Tabs.Screen
@@ -36,10 +51,10 @@ const TabsLayout = () => {
             <TabIcon
               icon={icons.barcode}
               color={color}
-              name="Scan"
+              name={''}
               focused={focused}
             />
-          )
+          ),
         }}
       />
       <Tabs.Screen
@@ -49,12 +64,12 @@ const TabsLayout = () => {
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
-              icon={icons.profile}
+              icon={icons.settings}
               color={color}
-              name="Profile"
+              name={''}
               focused={focused}
             />
-          )
+          ),
         }}
       />
       <Tabs.Screen
@@ -71,27 +86,6 @@ const TabsLayout = () => {
           href: null,
         }}
       />
-      {/* <Tabs.Screen
-        name="ComingSoon"
-        options={{
-          headerShown: false,
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="Donation"
-        options={{
-          headerShown: false,
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="ContactUs"
-        options={{
-          headerShown: false,
-          href: null,
-        }}
-      /> */}
     </Tabs>
   );
 };
@@ -101,7 +95,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#232533',
-    height: 85
+    // height will be dynamically set using getTabBarHeight function
   }
 });
 

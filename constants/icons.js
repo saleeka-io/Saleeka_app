@@ -13,7 +13,7 @@ import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import barcode from "../assets/icons/barcode.png";
 import history from "../assets/icons/history.png";
-
+import settings from "../assets/icons/settings.png";
 
 export default {
   play,
@@ -31,4 +31,5 @@ export default {
   eye,
   barcode,
   history,
+  settings,
 };

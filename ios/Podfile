@@ -55,9 +55,10 @@ target 'testapp' do
 
   # Firebase and Google dependencies
   pod 'Firebase/Core'
-  pod 'Firebase/Auth'
-  pod 'Firebase/Firestore'
-  pod 'Firebase/Storage'
+  pod 'Firebase/Auth', '11.2.0'
+  pod 'Firebase/Firestore', '11.2.0'
+  pod 'Firebase/Storage', '11.2.0'
+
 
   
   post_install do |installer|

@@ -29,8 +29,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    width: 24,  // Equivalent to Tailwind w-6 (assuming 1 unit = 4px)
-    height: 24, // Equivalent to Tailwind h-6
+    width: 34,  // Equivalent to Tailwind w-6 (assuming 1 unit = 4px)
+    height: 34, // Equivalent to Tailwind h-6
+    paddingTop: 8,
   },
   textFocused: {
     fontSize: 12, // Equivalent to Tailwind text-xs

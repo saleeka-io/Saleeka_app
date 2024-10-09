@@ -6,6 +6,8 @@ import firestore from '@react-native-firebase/firestore';
 import { useUser } from '../../context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Buffer } from 'buffer';
+import { FlashMode } from 'expo-camera/build/legacy/Camera.types';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Define the structure of product data
 interface ProductData {
@@ -40,8 +42,49 @@ const BarcodeScanner = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // New state for manual input modal
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const overlayAnimation = useRef(new Animated.Value(0)).current;
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
+
+  // Simplify flash mode state to boolean
+  // const [isFlashOn, setIsFlashOn] = useState(false);
+
+  // // Simplified function to toggle flash
+  // const toggleFlash = () => {
+  //   setIsFlashOn(prevState => {
+  //     const newState = !prevState;
+  //     console.log(`Flash turned ${newState ? 'on' : 'off'}`);
+  //     return newState;
+  //   });
+  // };
+
+  // // Simplified function to get the appropriate flash icon
+  // const getFlashIcon = () => isFlashOn ? 'flash' : 'flash-off';
+
+  // // Log flash mode changes
+  // useEffect(() => {
+  //   console.log(`Current flash mode: ${isFlashOn ? 'on' : 'off'}`);
+  // }, [isFlashOn]);
+
+
+  // Function to show overlay with animation
+  const showOverlay = () => {
+    setIsOverlayVisible(true);
+    Animated.timing(overlayAnimation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Function to hide overlay with animation
+  const hideOverlay = () => {
+    Animated.timing(overlayAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setIsOverlayVisible(false));
+  };
 
   // Animation for the ellipsis
   useEffect(() => {
@@ -91,7 +134,7 @@ const BarcodeScanner = () => {
     useCallback(() => {
       console.log('Focus effect triggered: Resetting scanned and modal visibility.');
       setScanned(false);
-      setIsModalVisible(false);  // Ensure the modal is hidden when returning
+      hideOverlay();  // Ensure the modal is hidden when returning
       setManualBarcode('');
     }, [])
   );
@@ -102,7 +145,7 @@ const BarcodeScanner = () => {
 
   // Testing barcode automatically on component mount
   // useEffect(() => {
-  //   const testBarcode = '742365007071'; // Hardcoded barcode for testing
+  //   const testBarcode = '7423650070'; // Hardcoded barcode for testing
   //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   // }, []);
 
@@ -137,7 +180,7 @@ const BarcodeScanner = () => {
     }
   
     console.log('Manual barcode entered:', manualBarcode);
-    setIsModalVisible(false);  // Close the modal
+    setIsOverlayVisible(false);  // Close the modal
     setScanned(true);
   
     await handleBarCodeScanned({ type: 'manual', data: manualBarcode });
@@ -248,40 +291,59 @@ const BarcodeScanner = () => {
     );
   }
 
-  const renderModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isModalVisible}
-      onRequestClose={() => {
-        console.log('Modal closed by back button or swipe gesture.');
-        setManualBarcode('');
-        setIsModalVisible(false);
-      }}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <TouchableOpacity 
-            style={styles.modalCloseButton} 
-            onPress={() => setIsModalVisible(false)}
+  const renderOverlay = () => (
+    isOverlayVisible && (
+      <Animated.View 
+        style={[
+          styles.overlayContainer, 
+          {
+            opacity: overlayAnimation,
+          }
+        ]}
+      >
+        <View style={styles.blurOverlay} />
+        <Animated.View 
+          style={[
+            styles.overlayContent,
+            {
+              transform: [{
+                translateY: overlayAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [300, 0],
+                }),
+              }],
+            }
+          ]}
+        >
+          <LinearGradient
+            colors={['#3A6A64', '#2A4A45']}
+            style={styles.gradientBackground}
           >
-            <Ionicons name="close" size={24} color="#3A6A64" />
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Enter Barcode Manually</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setManualBarcode}
-            value={manualBarcode}
-            placeholder="Enter barcode"
-            keyboardType="numeric"
-            placeholderTextColor="#666"
-          />
-          <TouchableOpacity style={styles.searchButton} onPress={handleManualInput}>
-            <Text style={styles.searchButtonText}>Search</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
+            <TouchableOpacity 
+              style={styles.overlayCloseButton} 
+              onPress={hideOverlay}
+            >
+              <Ionicons name="close" size={24} color="#f1ede1" />
+            </TouchableOpacity>
+            <Text style={styles.overlayTitle}>Enter Barcode</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                onChangeText={setManualBarcode}
+                value={manualBarcode}
+                placeholder="Type barcode number"
+                keyboardType="numeric"
+                placeholderTextColor="#a0a0a0"
+              />
+            </View>
+            <TouchableOpacity style={styles.searchButton} onPress={handleManualInput}>
+              <Text style={styles.searchButtonText}>Search</Text>
+              <Ionicons name="search" size={20} color="#f1ede1" style={styles.searchIcon} />
+            </TouchableOpacity>
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+    )
   );
 
   return (
@@ -292,18 +354,20 @@ const BarcodeScanner = () => {
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: [
-            'ean13', 'ean8', 'upc_a', 'upc_e', 'code39', 'code128',
-            'codabar', 'interleaved2of5', 'pdf417', 'aztec', 'dataMatrix',
+            'ean13', 'ean8', 'upc_a', 'upc_e'
           ],
         }}
+        // flashMode={isFlashOn ? FlashMode.torch : FlashMode.off}
       >
-       <View style={styles.overlay}>
-          {/* Manual input button */}
+        <View style={styles.overlay}>
           <TouchableOpacity 
             style={styles.manualInputButton} 
-            onPress={() => setIsModalVisible(true)}
+            onPress={() => {
+              console.log('Manual input button pressed');
+              showOverlay();
+            }}
           >
-            <Ionicons name ="barcode-outline" size={24} color={"white"}/>
+            <Ionicons name="barcode-outline" size={24} color="white" />
           </TouchableOpacity>
 
           <Text style={styles.searchingText}>SEARCHING FOR BARCODE{ellipsis}</Text>
@@ -312,12 +376,18 @@ const BarcodeScanner = () => {
               {renderBarcodeLines()}
             </Animated.View>
           </View>
-          <TouchableOpacity style={styles.flashButton}>
-            <Ionicons name="flash-off" size={24} color="white" />
-          </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.flashButton} 
+            onPress={() => {
+              console.log('Flash button pressed');
+              toggleFlash();
+            }}
+          >
+            <Ionicons name={getFlashIcon()} size={24} color="white" />
+          </TouchableOpacity> */}
         </View>
       </CameraView>
-      {renderModal()}
+      {renderOverlay()}
     </SafeAreaView>
   );
 };
@@ -330,55 +400,79 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  modalContainer: {
-    flex: 1,
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    backgroundColor: '#f1ede1',
-    padding: 20,
-    borderRadius: 15,
-    width: '80%',
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  overlayContent: {
+    width: '90%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  gradientBackground: {
+    padding: 30,
     alignItems: 'center',
   },
-  modalCloseButton: {
-    alignSelf: 'flex-end',
+  overlayCloseButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
     padding: 10,
   },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3A6A64',
-    marginBottom: 20,
+  overlayTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#f1ede1',
+    marginBottom: 30,
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#3A6A64',
-    borderRadius: 25,
-    padding: 15,
-    marginBottom: 20,
+  inputContainer: {
     width: '100%',
-    fontSize: 16,
+    backgroundColor: '#f1ede1',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    padding: 15,
+    fontSize: 18,
     color: '#3A6A64',
-    backgroundColor: '#fff',
   },
   searchButton: {
-    backgroundColor: '#3A6A64',
-    paddingHorizontal: 30,
+    backgroundColor: '#f1ede1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 15,
-    borderRadius: 25,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    width: '50%',
   },
   searchButtonText: {
-    color: '#f1ede1',
+    color: '#3A6A64',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginRight: 10,
+  },
+  searchIcon: {
+    color: '#3A6A64',
   },
   manualInputButton: {
     position: 'absolute',
-    bottom: 15,
+    top: 25,
     left: 20,
     padding: 25,
     zIndex: 1000,
@@ -432,11 +526,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
   },
-  flashButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-  },
+  // flashButton: {
+  //   position: 'absolute',
+  //   top: 50,
+  //   right: 20,
+  // },
   message: {
     color: 'white',
     textAlign: 'center',

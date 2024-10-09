@@ -12,35 +12,24 @@ import {
   Dimensions,
   ScrollView,
   KeyboardAvoidingView,
+  StatusBar,
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import avocadoAnimation from '../../assets/lottie/Avocado.json';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useUser } from '../../context/UserContext';
 
-// Get the device dimensions for responsive design
 const { width, height } = Dimensions.get('window');
-
-// Calculate responsive font sizes and spacing
-const responsiveFontSize = (size: number) => {
-  const scaleFactor = Math.min(width, height) / 375; // Base scale on iPhone 8 screen width
-  return Math.round(size * scaleFactor);
-};
-
-const responsiveSpacing = (space: number) => {
-  const scaleFactor = Math.min(width, height) / 375;
-  return Math.round(space * scaleFactor);
-};
 
 const ProductNotFound = () => {
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
-  
   const [barcodeState, setBarcodeState] = useState(barcode || '');
   const [productImage, setProductImage] = useState<string | null>(null);
   const [ingredientsImage, setIngredientsImage] = useState<string | null>(null);
@@ -52,7 +41,6 @@ const ProductNotFound = () => {
 
   useEffect(() => {
     console.log('Received Barcode:', barcode);
-
     setBarcodeState(barcode || '');
     setProductImage(null);
     setIngredientsImage(null);
@@ -63,7 +51,14 @@ const ProductNotFound = () => {
     };
 
     requestPermission();
+
+    // Set status bar properties
+    StatusBar.setBarStyle('light-content');
+    if (Platform.OS === 'android') {
+      StatusBar.setBackgroundColor('#3A6A64');
+    }
   }, [barcode]);
+
 
   const uploadImage = async (uri: string, imageName: string): Promise<string | null> => {
     if (!uri) return null;
@@ -82,28 +77,13 @@ const ProductNotFound = () => {
     }
   };
 
-  const takePhoto = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
-    if (cameraPermission === null) {
+  const handleImageSelection = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please grant permission to access your photo library.');
       return;
     }
 
-    if (!cameraPermission) {
-      Alert.alert('Permission Required', 'Camera permission is required to take photos');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  };
-
-  const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -114,27 +94,6 @@ const ProductNotFound = () => {
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
-  };
-
-  const handleImageSelection = (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
-    Alert.alert(
-      "Select Image Source",
-      "Choose the source for your image",
-      [
-        {
-          text: "Camera",
-          onPress: () => takePhoto(setImage)
-        },
-        {
-          text: "Photo Library",
-          onPress: () => pickImage(setImage)
-        },
-        {
-          text: "Cancel",
-          style: "cancel"
-        }
-      ]
-    );
   };
 
   const handleSubmit = async () => {
@@ -200,83 +159,92 @@ const ProductNotFound = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#3A6A64', '#1E3B38']}
+        style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContent}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
         >
-          {!isSubmitting ? (
-            <View style={styles.content}>
-              <Image
-                source={require('../../assets/images/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Product Not Found</Text>
-              <Text style={styles.message}>
-                Result not found. Please upload product info for flag score
-              </Text>
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {!isSubmitting ? (
+              <View style={styles.content}>
+                <View style={styles.logoContainer}>
+                  <Image
+                    source={require('../../assets/images/logo.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.title}>Product Not Found</Text>
+                <Text style={styles.message}>
+                  Result not found. Please upload product info for flag score
+                </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Input Barcode Number"
-                value={barcodeState}
-                onChangeText={text => setBarcodeState(text)}
-                placeholderTextColor="#888"
-              />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Input Barcode Number"
+                  value={barcodeState}
+                  onChangeText={text => setBarcodeState(text)}
+                  placeholderTextColor="#CCCCCC"
+                />
 
-              <View style={styles.photoContainer}>
-                <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
-                  {productImage ? (
-                    <Image source={{ uri: productImage }} style={styles.takenPhoto} />
-                  ) : (
-                    <>
-                      <Ionicons name="images" size={responsiveFontSize(32)} color="#fff" />
-                      <Text style={styles.photoText}>Front of Product</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setIngredientsImage)}>
-                  {ingredientsImage ? (
-                    <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
-                  ) : (
-                    <>
-                      <Ionicons name="images" size={responsiveFontSize(32)} color="#fff" />
-                      <Text style={styles.photoText}>Image of Ingredients</Text>
-                    </>
-                  )}
+                <View style={styles.photoContainer}>
+                  <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setProductImage)}>
+                    {productImage ? (
+                      <Image source={{ uri: productImage }} style={styles.takenPhoto} />
+                    ) : (
+                      <>
+                        <Ionicons name="images" size={32} color="#fff" />
+                        <Text style={styles.photoText}>Front of Product</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.photoButton} onPress={() => handleImageSelection(setIngredientsImage)}>
+                    {ingredientsImage ? (
+                      <Image source={{ uri: ingredientsImage }} style={styles.takenPhoto} />
+                    ) : (
+                      <>
+                        <Ionicons name="images" size={32} color="#fff" />
+                        <Text style={styles.photoText}>Image of Ingredients</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                  <Text style={styles.submitText}>Submit</Text>
                 </TouchableOpacity>
               </View>
-
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitText}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.centeredContainer}>
-              <LottieView
-                source={avocadoAnimation}
-                autoPlay
-                loop={true}
-                style={styles.avocadoAnimation}
-              />
-              <Text style={styles.thankYouText}>Thank you, your submission is being processed</Text>
-            </View>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            ) : (
+              <View style={styles.centeredContainer}>
+                <LottieView
+                  source={avocadoAnimation}
+                  autoPlay
+                  loop={true}
+                  style={styles.avocadoAnimation}
+                />
+                <Text style={styles.thankYouText}>Thank you, your submission is being processed</Text>
+              </View>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(58, 106, 100, 0.9)',
+  },
+  gradient: {
+    flex: 1,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -285,81 +253,89 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: responsiveSpacing(20),
-    paddingTop: Platform.OS === 'ios' ? responsiveSpacing(20) : responsiveSpacing(20),
-    paddingBottom: responsiveSpacing(20),
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40, // Increased top padding to account for status bar
+    paddingBottom: 20,
   },
   content: {
     width: '100%',
     alignItems: 'center',
   },
+  logoContainer: {
+    width: width * 0.3,
+    height: width * 0.52 * (9/16),
+    borderRadius: width * 0.3,
+    backgroundColor: '#f1ede1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    overflow: 'hidden',
+  },
   logo: {
     width: width * 0.5,
     height: width * 0.5 * (9/16),
-    marginBottom: responsiveSpacing(20),
+    marginBottom: 1,
   },
   title: {
-    fontSize: responsiveFontSize(24),
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: responsiveSpacing(10),
+    color: '#FFFFFF',
+    marginBottom: 10,
   },
   message: {
-    fontSize: responsiveFontSize(14),
-    color: '#f1ede1',
+    fontSize: 16,
+    color: '#CCCCCC',
     textAlign: 'center',
-    marginBottom: responsiveSpacing(20),
+    marginBottom: 30,
   },
   input: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#f1ede1',
-    padding: responsiveSpacing(15),
-    borderRadius: responsiveSpacing(25),
-    marginBottom: responsiveSpacing(20),
-    color: '#fff',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    fontSize: responsiveFontSize(14),
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 40,
+    marginBottom: 20,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
   photoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: responsiveSpacing(20),
+    marginBottom: 20,
   },
   photoButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(47, 86, 81, 0.8)',
-    padding: responsiveSpacing(15),
-    borderRadius: responsiveSpacing(15),
-    marginHorizontal: responsiveSpacing(5),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 5,
     height: width * 0.4,
   },
   photoText: {
-    color: '#fff',
-    marginTop: responsiveSpacing(5),
+    color: '#FFFFFF',
+    marginTop: 10,
     textAlign: 'center',
-    fontSize: responsiveFontSize(14),
+    fontSize: 14,
   },
   takenPhoto: {
     width: '100%',
     height: '100%',
-    borderRadius: responsiveSpacing(15),
+    borderRadius: 10,
   },
   submitButton: {
-    backgroundColor: '#f1ede1',
-    padding: responsiveSpacing(15),
-    borderRadius: responsiveSpacing(25),
-    width: '100%',
-    alignItems: 'center',
-    marginTop: responsiveSpacing(20),
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 20,
   },
   submitText: {
     color: '#3A6A64',
     fontWeight: 'bold',
-    fontSize: responsiveFontSize(16),
+    fontSize: 18,
   },
   centeredContainer: {
     flex: 1,
@@ -371,22 +347,22 @@ const styles = StyleSheet.create({
     height: width * 0.5,
   },
   thankYouText: {
-    marginTop: responsiveSpacing(20),
-    fontSize: responsiveFontSize(18),
-    color: '#fff',
+    marginTop: 20,
+    fontSize: 20,
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#f1ede1',
-    padding: responsiveSpacing(15),
-    borderRadius: responsiveSpacing(25),
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 25,
     alignItems: 'center',
-    marginTop: responsiveSpacing(20),
+    marginTop: 20,
   },
   buttonText: {
     color: '#3A6A64',
     fontWeight: 'bold',
-    fontSize: responsiveFontSize(16),
+    fontSize: 16,
   },
 });
 
