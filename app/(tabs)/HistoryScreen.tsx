@@ -248,7 +248,10 @@ const HistoryScreen = () => {
       if (!user) return;  // Ensure user is logged in
       try {
         setLoading(true);
-        const scansSnapshot = await firestore().collection('scans').where('userId', '==', user.uid).get();
+        const scansSnapshot = await firestore().collection('scans')
+        .where('userId', '==', user.uid)
+        .orderBy('timestamp', 'desc')  // Order by timestamp in descending order
+        .get();
         const barcodes = scansSnapshot.docs.map(doc => doc.data().barcode);
 
         console.log(`Total barcodes found for user ${user.uid}: ${barcodes.length}`);

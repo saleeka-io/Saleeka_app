@@ -3169,10 +3169,10 @@ DEPENDENCIES:
   - EXSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
-  - Firebase/Auth (= 11.2.0)
+  - Firebase/Auth
   - Firebase/Core
-  - Firebase/Firestore (= 11.2.0)
-  - Firebase/Storage (= 11.2.0)
+  - Firebase/Firestore
+  - Firebase/Storage
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
@@ -3581,6 +3581,6 @@ SPEC CHECKSUMS:
   Yoga: bd92064a0d558be92786820514d74fc4dddd1233
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: 1ac8326665e63ae7cb3eb157fd97eeaa13a11296
+PODFILE CHECKSUM: 0cffe3df8a29e4d200b54195c30dae0c29ffecae
 
 COCOAPODS: 1.15.2
