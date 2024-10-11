@@ -12,20 +12,7 @@
           "package_name": "com.saleeka.testapp"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "672182447294-vh8vueek2g990lu59rv74a9u77r1heat.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.saleeka.testapp",
-            "certificate_hash": "f76dd5b886d8e54c5550edb3acb704899b7e9ae8"
-          }
-        },
-        {
-          "client_id": "672182447294-54qp4npu9efeksp72v6gvpkk42rn86n7.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyDczDS7bebqYtkUVtEb8ObLcH1SvSgL9MU"
@@ -33,19 +20,7 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "672182447294-04nvfbk6lhg5lt9lnc5k9hd0358jmavu.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "672182447294-3bk77dd2jedgqakkmoc0o45cbcpp7eaj.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.saleeka.testapp"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
