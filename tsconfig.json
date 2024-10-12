@@ -12,9 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "typeRoots": [
-    "./types"
-  ],
+
   "include": [
     "**/*.ts",
     "**/*.tsx",

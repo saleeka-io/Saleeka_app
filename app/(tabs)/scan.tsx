@@ -11,9 +11,10 @@ import { FlashMode } from 'expo-camera/build/legacy/Camera.types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CacheService } from '../../components/CacheService';
 import { RatingService, Rating } from '../../components/RatingService';
-import Constants from 'expo-constants';
-const { extra } = Constants.expoConfig || {};
-const apiKey = Constants?.expoConfig?.extra?.apiKey || process.env.API_KEY;
+
+
+//console.log({ apiKey });
+ 
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -163,10 +164,10 @@ const BarcodeScanner = () => {
     }, [])
   );
     // Testing barcode automatically on component mount
-  useEffect(() => {
-    const testBarcode = '3168930008170'; // Hardcoded barcode for testing
-    handleBarCodeScanned({ type: 'ean13', data: testBarcode });
-  }, []);
+  // useEffect(() => {
+  //   const testBarcode = '3168930008170'; // Hardcoded barcode for testing
+  //   handleBarCodeScanned({ type: 'ean13', data: testBarcode });
+  // }, []);
 
     // 028400589871 - Red
   // 0737628064502 - Yellow
@@ -262,21 +263,26 @@ const BarcodeScanner = () => {
   };
 
   const translateIngredients = async (text: string): Promise<string> => {
-    //const apiKey = apiKey; // Replace with your DeepL API key
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY; // Make sure you're using the correct API key environment variable
     const url = `https://api-free.deepl.com/v2/translate`;
     console.log('Translation function is called with text:', text);
   
+    if (!apiKey) {
+      throw new Error('DeepL API key is missing.');
+    }
+  
     try {
+      const params = new URLSearchParams();
+      params.append('auth_key', apiKey);
+      params.append('text', text);
+      params.append('target_lang', 'EN'); // Translate to English
+  
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          auth_key: apiKey,
-          text: text,
-          target_lang: 'EN', // Translate to English
-        }).toString(),
+        body: params.toString(), // Corrected this part
       });
   
       const data = await response.json();
@@ -293,7 +299,6 @@ const BarcodeScanner = () => {
       return text; // Return the original text if translation fails
     }
   };
-  
   
   
   
@@ -413,8 +418,8 @@ const fetchProductData = async (barcode: string): Promise<ProductData | null> =>
           log("\nSending ingredients to DeepL API for translation");
           log(`Original ingredients: ${ingredients.join(', ')}`);
 
-          const translatedIngredients = await translateIngredients(ingredients.join(', '));
-          ingredients = translatedIngredients.split(', ');
+         const translatedIngredients = await translateIngredients(ingredients.join(', '));
+         ingredients = translatedIngredients.split(', ');
 
           log(`Translated ingredients: ${ingredients.join(', ')}`);
         }
