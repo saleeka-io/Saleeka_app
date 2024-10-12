@@ -42,6 +42,11 @@ const responsiveSpacing = (space: number) => {
   return Math.round(space * scaleFactor);
 };
 
+interface FirebaseAuthError {
+  code: string;
+  message: string;
+}
+
 // Create an animated version of LinearGradient for smooth transitions
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -71,10 +76,17 @@ const Login = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Helper function to check if an error is a Firebase error
-  const isFirebaseError = (error: any) => {
-    return typeof error.code === 'string' && typeof error.message === 'string';
-  };
+  function isFirebaseError(error: unknown): error is FirebaseAuthError {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      'message' in error &&
+      typeof (error as any).code === 'string' &&
+      typeof (error as any).message === 'string'
+    );
+  }
+  
 
   // Handle the login process
   const handleLogin = async () => {

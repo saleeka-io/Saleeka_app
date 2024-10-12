@@ -581,6 +581,7 @@ import { Buffer } from 'buffer';
 import { Ionicons } from '@expo/vector-icons';
 import { RatingService } from '../../components/RatingService'; // Import RatingService
  import bannedIngredientsData from '../bannedIngredients.json';
+ import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
 import redXAnimation from '../../assets/lottie/RedX.json';
 import checkmarkAnimation from '../../assets/lottie/Checkmark.json';
@@ -760,13 +761,13 @@ const ResultScreen = () => {
 
           {/* Dynamically render Lottie animation based on product rating */}
           {animationSource && (
-            <LottieView
-              source={animationSource}
-              autoPlay
-              loop={true}
-              speed={0.75}
-              style={styles.lottieAnimation}
-            />
+          <LottieView
+          source={animationSource}
+          autoPlay={true}
+          loop={false}
+          speed={0.75}
+          style={styles.lottieAnimation}
+        />
           )}
         </View>
 
@@ -862,10 +863,6 @@ const ResultScreen = () => {
   );
 };
 
-
-
-
-
 // Styles for the component
 const styles = StyleSheet.create({
   container: {
@@ -897,15 +894,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   productImage: {
-    width: 200,
-    height: 200,
+    width: '50%', // or any percentage that fits your design
+    height: undefined,
+    aspectRatio: 1, // Maintains aspect ratio
     resizeMode: 'contain',
   },
   lottieAnimation: {
     width: 100,
     height: 100,
     position: 'absolute',
-    right: 30,
+    right: 10,
     top: '50%',
     marginTop: -50,
   },

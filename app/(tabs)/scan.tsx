@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
@@ -40,6 +40,8 @@ const BarcodeScanner = () => {
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
 
   // Simplify flash mode state to boolean
   // const [isFlashOn, setIsFlashOn] = useState(false);
@@ -186,6 +188,7 @@ const BarcodeScanner = () => {
       const { data } = scanningResult;
   
       try {
+        setIsLoading(true); // Start loading
         const productData = await fetchProductData(data);
   
         if (productData && isMountedRef.current) {
@@ -215,12 +218,16 @@ const BarcodeScanner = () => {
           [{ text: "OK" }]
         );
       } finally {
-        setScanned(false);  // Allow scanning again after processing (success or failure)
+        if (isMountedRef.current) {
+          setIsLoading(false); // Stop loading
+          setScanned(false);  // Allow scanning again after processing (success or failure)
+        }
       }
     } else {
       log('\nScan skipped: Already scanned or component unmounted.');
     }
   }, [scanned, router]);
+  
   
 
   const handleManualInput = useCallback(async () => {
@@ -258,7 +265,7 @@ const BarcodeScanner = () => {
     }
   };
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 2;
 const RETRY_DELAY = 2000; // 2 seconds
 const FETCH_TIMEOUT = 10000; // 10 seconds
 
@@ -537,6 +544,11 @@ const fetchProductData = async (barcode: string): Promise<ProductData | null> =>
           </TouchableOpacity> */}
         </View>
       </CameraView>
+      {isLoading && (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color="#ffffff" />
+  </View>
+)}
       {renderOverlay()}
     </SafeAreaView>
   );
@@ -549,6 +561,13 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',  // Move content to the bottom
+    alignItems: 'center',        // Center content horizontally
+    paddingBottom: 50,           // Add space from the bottom edge
   },
   overlayContainer: {
     ...StyleSheet.absoluteFillObject,

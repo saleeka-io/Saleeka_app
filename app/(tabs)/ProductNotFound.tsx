@@ -25,6 +25,8 @@ import avocadoAnimation from '../../assets/lottie/Avocado.json';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useUser } from '../../context/UserContext';
+import CustomText from '@/components/CustomText';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -144,15 +146,15 @@ const ProductNotFound = () => {
   };
 
   if (cameraPermission === null) {
-    return <Text style={styles.message}>Requesting camera permission...</Text>;
+    return <CustomText style={styles.message}>Requesting camera permission...</CustomText>;
   }
 
   if (!cameraPermission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to use the camera</Text>
+        <CustomText style={styles.message}>We need your permission to use the camera</CustomText>
         <TouchableOpacity onPress={() => Camera.requestCameraPermissionsAsync()} style={styles.button}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+          <CustomText style={styles.buttonText}>Grant Permission</CustomText>
         </TouchableOpacity>
       </View>
     );
@@ -181,10 +183,10 @@ const ProductNotFound = () => {
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.title}>Product Not Found</Text>
-                <Text style={styles.message}>
+                <CustomText style={styles.title}>Product Not Found</CustomText>
+                <CustomText style={styles.message}>
                   Result not found. Please upload product info for flag score
-                </Text>
+                </CustomText>
 
                 <TextInput
                   style={styles.input}
@@ -201,7 +203,7 @@ const ProductNotFound = () => {
                     ) : (
                       <>
                         <Ionicons name="images" size={32} color="#fff" />
-                        <Text style={styles.photoText}>Front of Product</Text>
+                        <CustomText style={styles.photoText}>Front of Product</CustomText>
                       </>
                     )}
                   </TouchableOpacity>
@@ -211,14 +213,14 @@ const ProductNotFound = () => {
                     ) : (
                       <>
                         <Ionicons name="images" size={32} color="#fff" />
-                        <Text style={styles.photoText}>Image of Ingredients</Text>
+                        <CustomText style={styles.photoText}>Image of Ingredients</CustomText>
                       </>
                     )}
                   </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                  <Text style={styles.submitText}>Submit</Text>
+                  <CustomText style={styles.submitText}>Submit</CustomText>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -229,7 +231,7 @@ const ProductNotFound = () => {
                   loop={true}
                   style={styles.avocadoAnimation}
                 />
-                <Text style={styles.thankYouText}>Thank you, your submission is being processed</Text>
+                <CustomText style={styles.thankYouText}>Thank you, your submission is being processed</CustomText>
               </View>
             )}
           </ScrollView>
