@@ -11,8 +11,9 @@ import { FlashMode } from 'expo-camera/build/legacy/Camera.types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CacheService } from '../../components/CacheService';
 import { RatingService, Rating } from '../../components/RatingService';
-import {DEEPL_API_KEY} from '@env';
-console.log(DEEPL_API_KEY);
+import Constants from 'expo-constants';
+const { extra } = Constants.expoConfig || {};
+const apiKey = Constants?.expoConfig?.extra?.apiKey || process.env.API_KEY;
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -261,7 +262,7 @@ const BarcodeScanner = () => {
   };
 
   const translateIngredients = async (text: string): Promise<string> => {
-    const apiKey = DEEPL_API_KEY; // Replace with your DeepL API key
+    //const apiKey = apiKey; // Replace with your DeepL API key
     const url = `https://api-free.deepl.com/v2/translate`;
     console.log('Translation function is called with text:', text);
   
