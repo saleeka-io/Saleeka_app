@@ -11,6 +11,8 @@ import { FlashMode } from 'expo-camera/build/legacy/Camera.types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CacheService } from '../../components/CacheService';
 import { RatingService, Rating } from '../../components/RatingService';
+import {DEEPL_API_KEY} from '@env';
+console.log(DEEPL_API_KEY);
 interface ProductData {
   product_name: string;
   calories: number | null;
@@ -161,7 +163,7 @@ const BarcodeScanner = () => {
   );
     // Testing barcode automatically on component mount
   useEffect(() => {
-    const testBarcode = '7622210194046'; // Hardcoded barcode for testing
+    const testBarcode = '3168930008170'; // Hardcoded barcode for testing
     handleBarCodeScanned({ type: 'ean13', data: testBarcode });
   }, []);
 
@@ -257,6 +259,43 @@ const BarcodeScanner = () => {
       Alert.alert("Database Error", "Failed to save scan data.");
     }
   };
+
+  const translateIngredients = async (text: string): Promise<string> => {
+    const apiKey = DEEPL_API_KEY; // Replace with your DeepL API key
+    const url = `https://api-free.deepl.com/v2/translate`;
+    console.log('Translation function is called with text:', text);
+  
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          auth_key: apiKey,
+          text: text,
+          target_lang: 'EN', // Translate to English
+        }).toString(),
+      });
+  
+      const data = await response.json();
+      console.log('Translation API response:', data);
+  
+      if (data.translations && data.translations.length > 0) {
+        console.log('Translated Text:', data.translations[0].text);
+        return data.translations[0].text;
+      } else {
+        throw new Error('Translation failed');
+      }
+    } catch (error) {
+      console.error('Error translating ingredients:', error);
+      return text; // Return the original text if translation fails
+    }
+  };
+  
+  
+  
+  
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -354,14 +393,31 @@ const fetchProductData = async (barcode: string): Promise<ProductData | null> =>
       const data = await response.json();
 
       if (data.status === 1) { // Product found
+        const languageTags = data.product?.languages_tags || [];
+        log(`Available languages: ${languageTags.join(', ')}`);
+      
+        // Check if English is available
+        const isEnglishAvailable = languageTags.includes('en');
         const additives = data.product?.additives_tags?.map((additive: string, index: number) => {
           const code = additive.replace('en:', '').toUpperCase();
           const originalTag = data.product?.additives_original_tags?.[index]?.replace('en:', '') || '';
           const name = originalTag.split(' - ')[1] || originalTag;
           return { code, name };
         }) || [];
-        const ingredients = data.product.ingredients_text_en || data.product.ingredients_text.split(', ');
+        let ingredients = data.product.ingredients_text_en || data.product.ingredients_text.split(', ');
         //const ingredients = data.product.ingredients_text ? data.product.ingredients_text.split(', ') : null;
+
+        if (ingredients.length > 0 && !isEnglishAvailable) {
+        
+          log("\nSending ingredients to DeepL API for translation");
+          log(`Original ingredients: ${ingredients.join(', ')}`);
+
+          const translatedIngredients = await translateIngredients(ingredients.join(', '));
+          ingredients = translatedIngredients.split(', ');
+
+          log(`Translated ingredients: ${ingredients.join(', ')}`);
+        }
+
         if (!ingredients || ingredients.length === 0 || ingredients[0] === "to be added") {
           log("\nNo valid ingredients found for product");
           throw new Error("Invalid ingredients");
