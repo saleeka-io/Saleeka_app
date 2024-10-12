@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import CustomText from '@/components/CustomText';
 
 const score = () => {
   const router = useRouter();
@@ -14,12 +15,12 @@ const score = () => {
 
   const RatingSection = ({ rating, color, description, icon }: { rating: string; color: string; description: string; icon: React.ReactNode }) => (
     <View style={styles.ratingSection}>
-      <Text style={styles.ratingText}>Product Rating: <Text style={{ color }}>{rating}</Text></Text>
+      <CustomText style={styles.ratingText}>Product Rating: <CustomText fontWeight="medium" style={{ color, fontSize: 20}}>{rating}</CustomText></CustomText>
       <View style={styles.ratingContent}>
         <RatingBar color={color} width={rating === 'Excellent' ? '90%' : rating === 'Okay' ? '50%' : '20%'} />
         <View style={styles.descriptionContainer}>
           {icon}
-          <Text style={styles.descriptionText}>{description}</Text>
+          <CustomText style={styles.descriptionText}>{description}</CustomText>
         </View>
       </View>
     </View>
@@ -31,7 +32,7 @@ const score = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Ionicons name="arrow-back" size={24} color="#3A6A64" onPress={() => router.back()} />
-          <Text style={styles.title}>Learn what our scale means</Text>
+          <CustomText  style={styles.title}>Scale Description</CustomText>
         </View>
         
         <RatingSection 
@@ -55,9 +56,9 @@ const score = () => {
           icon={<Ionicons name="close-circle" size={24} color="#F44336" />}
         />
 
-        <Text style={styles.footnote}>
+        <CustomText style={styles.footnote}>
           *Learn more about the research backing our approval at saleeka.io
-        </Text>
+        </CustomText>
       </ScrollView>
     </SafeAreaView>
   );
@@ -78,7 +79,7 @@ const styles = EStyleSheet.create({
   },
   title: {
     fontSize: '22rem',
-    fontWeight: 'bold',
+   
     color: '#3A6A64',
     marginLeft: '15rem',
   },
@@ -86,6 +87,7 @@ const styles = EStyleSheet.create({
     marginBottom: '30rem',
   },
   ratingText: {
+    color: 'black',
     fontSize: '18rem',
     fontWeight: '600',
     marginBottom: '10rem',
@@ -113,6 +115,7 @@ const styles = EStyleSheet.create({
     fontSize: '14rem',
     marginLeft: '10rem',
     flex: 1,
+    color: 'black',
   },
   footnote: {
     fontSize: '12rem',

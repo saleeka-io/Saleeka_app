@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import CustomText from '@/components/CustomText';
 
 const ContactUs = () => {
   const router = useRouter();
@@ -17,13 +18,13 @@ const ContactUs = () => {
       </TouchableOpacity>
       <View style={styles.content}>
         <Ionicons name="mail" size={80} color="#3A6A64" />
-        <Text style={styles.title}>Contact Us</Text>
-        <Text style={styles.message}>
+        <CustomText style={styles.title}>Contact Us</CustomText>
+        <CustomText style={styles.message}>
           We'd love to hear from you! If you have any questions, feedback, or concerns, please don't hesitate to reach out.
-        </Text>
+        </CustomText>
         <TouchableOpacity style={styles.emailButton} onPress={handleEmailPress}>
           <Ionicons name="mail-outline" size={24} color="#f1ede1" style={styles.emailIcon} />
-          <Text style={styles.emailButtonText}>contact@saleeka.io</Text>
+          <CustomText style={styles.emailButtonText}>contact@saleeka.io</CustomText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

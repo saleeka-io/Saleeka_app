@@ -29,6 +29,7 @@ self.define_singleton_method(use_autolinking_method_symbol) do |*args|
   end
 end
 
+# Set iOS deployment target to 13.4 or higher
 platform :ios, podfile_properties['ios.deploymentTarget'] || '13.4'
 
 install! 'cocoapods',
@@ -46,16 +47,20 @@ target 'testapp' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
+
   # Firebase and Google dependencies
   pod 'Firebase/Core'
-  pod 'Firebase/Auth'
-  pod 'Firebase/Firestore'
-  pod 'Firebase/Storage'
+  pod 'Firebase/Auth', '11.2.0'
+  pod 'Firebase/Firestore', '11.2.0'
+  pod 'Firebase/Storage', '11.2.0'
 
+
+  
   post_install do |installer|
     react_native_post_install(
       installer,
@@ -63,7 +68,7 @@ target 'testapp' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
-
+  
     # Ensure all pods have a minimum deployment target of iOS 13.4
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
@@ -72,20 +77,16 @@ target 'testapp' do
         end
       end
     end
-
-    # Remove unsupported '-G' flag for BoringSSL-GRPC
+  
+    # Set DEFINES_MODULE for conflicting pods to avoid merge conflict issues
     installer.pods_project.targets.each do |target|
-      if target.name == 'BoringSSL-GRPC'
-        target.source_build_phase.files.each do |file|
-          if file.settings && file.settings['COMPILER_FLAGS']
-            flags = file.settings['COMPILER_FLAGS'].split
-            flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
-            file.settings['COMPILER_FLAGS'] = flags.join(' ')
-          end
+      if ['expo-dev-menu', 'Main', 'ReactNativeCompatibles', 'SafeAreaView', 'Vendored'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['DEFINES_MODULE'] = 'YES'  # or 'NO' depending on what is required
         end
       end
     end
-
+  
     # Xcode 14 Resource Bundles Code Signing Fix
     installer.target_installation_results.pod_target_installation_results
       .each do |pod_name, target_installation_result|
@@ -95,16 +96,8 @@ target 'testapp' do
         end
       end
     end
-
-    # Set DEFINES_MODULE for conflicting pods to avoid merge conflict issues
-    installer.pods_project.targets.each do |target|
-      if ['expo-dev-menu', 'Main', 'ReactNativeCompatibles', 'SafeAreaView', 'Vendored'].include?(target.name)
-        target.build_configurations.each do |config|
-          config.build_settings['DEFINES_MODULE'] = 'YES'  # or 'NO' depending on what is required
-        end
-      end
-    end
   end
+  
 
   post_integrate do |installer|
     begin

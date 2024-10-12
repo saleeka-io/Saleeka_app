@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import CustomText from '@/components/CustomText';
 
 const ComingSoon = () => {
   const router = useRouter();
@@ -24,12 +25,12 @@ const ComingSoon = () => {
       </View>
       <View style={styles.content}>
         <Ionicons name="hourglass-outline" size={80} color="#3A6A64" />
-        <Text style={styles.title}>Coming Soon</Text>
-        <Text style={styles.message}>
+        <CustomText style={styles.title}>Coming Soon</CustomText>
+        <CustomText style={styles.message}>
           We're working hard to bring you this feature. Stay tuned!
-        </Text>
+        </CustomText>
         <TouchableOpacity style={styles.donateButton} onPress={handleDonation}>
-          <Text style={styles.donateButtonText}>Support Our Work</Text>
+          <CustomText style={styles.donateButtonText}>Support Our Work</CustomText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

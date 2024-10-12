@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import { useRouter } from 'expo-router';
+import CustomText from '@/components/CustomText';
 
 const Profile = () => {
   const router = useRouter();
@@ -39,7 +40,7 @@ const Profile = () => {
         <TouchableOpacity onPress={() => handleBackArrowPress('scan-screen')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <CustomText style={styles.headerTitle}>Settings</CustomText>
       </View>
       
       {/* <View style={styles.profileSection}>
@@ -48,24 +49,24 @@ const Profile = () => {
           style={styles.profileImage}
         />
         <TouchableOpacity style={styles.editButton}>
-          <Text style={styles.editButtonText}>Edit Profile</Text>
+          <CustomText style={styles.editButtonCustomText}>Edit Profile</CustomText>
         </TouchableOpacity>
       </View> */}
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="warning-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Allergies</Text>
+          <CustomText style={styles.menuItemCustomText}>Allergies</CustomText>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="cube-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Products Sent</Text>
+          <CustomText style={styles.menuItemCustomText}>Products Sent</CustomText>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('score')}>
           <Ionicons name="flag-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Learn About Our Flags</Text>
+          <CustomText style={styles.menuItemCustomText}>Learn About Our Flags</CustomText>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64"/>
         </TouchableOpacity>
       </View>
@@ -73,18 +74,18 @@ const Profile = () => {
       <View style={styles.section}>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('coming-soon')}>
           <Ionicons name="language-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Language</Text>
+          <CustomText style={styles.menuItemCustomText}>Language</CustomText>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => handleMenuItemPress('ContactUs')}>
           <Ionicons name="mail-outline" size={24} color="#3A6A64" />
-          <Text style={styles.menuItemText}>Contact Us</Text>
+          <CustomText style={styles.menuItemCustomText}>Contact Us</CustomText>
           <Ionicons name="chevron-forward" size={24} color="#3A6A64" />
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
+        <CustomText fontWeight='semiBold' style={styles.logoutButtonCustomText}>Logout</CustomText>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  editButtonText: {
+  editButtonCustomText: {
     color: '#3A6A64',
     fontWeight: 'bold',
   },
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  menuItemText: {
+  menuItemCustomText: {
     flex: 1,
     marginLeft: 16,
     fontSize: 16,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  logoutButtonText: {
+  logoutButtonCustomText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

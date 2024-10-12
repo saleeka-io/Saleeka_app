@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import CustomText from '@/components/CustomText';
 
 const Donation = () => {
   const router = useRouter();
@@ -21,10 +22,10 @@ const Donation = () => {
       </TouchableOpacity>
       <View style={styles.content}>
         <Ionicons name="heart" size={80} color="#3A6A64" />
-        <Text style={styles.title}>Support Our Work</Text>
-        <Text style={styles.message}>
+        <CustomText style={styles.title}>Support Our Work</CustomText>
+        <CustomText style={styles.message}>
           Your donation helps us continue our mission to provide nutritional information to everyone.
-        </Text>
+        </CustomText>
         <View style={styles.amountContainer}>
           {predefinedAmounts.map((presetAmount) => (
             <TouchableOpacity
@@ -32,9 +33,9 @@ const Donation = () => {
               style={[styles.amountButton, amount === presetAmount.toString() && styles.selectedAmount]}
               onPress={() => setAmount(presetAmount.toString())}
             >
-              <Text style={[styles.amountButtonText, amount === presetAmount.toString() && styles.selectedAmountText]}>
+              <CustomText style={[styles.amountButtonText, amount === presetAmount.toString() && styles.selectedAmountText]}>
                 ${presetAmount}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
           ))}
         </View>
@@ -47,7 +48,7 @@ const Donation = () => {
         />
         <TouchableOpacity style={styles.donateButton} onPress={handleDonation}>
           <Ionicons name="logo-apple" size={24} color="#f1ede1" style={styles.appleIcon} />
-          <Text style={styles.donateButtonText}>Donate with Apple Pay</Text>
+          <CustomText style={styles.donateButtonText}>Donate with Apple Pay</CustomText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

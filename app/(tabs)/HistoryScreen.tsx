@@ -211,7 +211,7 @@
 //   });
   
 //   export default HistoryScreen;
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -241,6 +241,7 @@ const HistoryScreen = () => {
   const [historyItems, setHistoryItems] = useState<ProductData[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const flatListRef = useRef<FlatList>(null); // Add ref for FlatList
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -378,9 +379,47 @@ const HistoryScreen = () => {
     );
   };
 
+  if (loading && historyItems.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#478B4E" />
+        <Text style={styles.loadingText}>Loading scan history...</Text>
+      </View>
+    );
+  }
+
+  const scrollToTop = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+    }
+  };
+
+  const renderFooter = () => {
+    if (loading && hasMore) {
+      // Show loading indicator while more data is being fetched
+      return (
+        <View style={styles.footerContainer}>
+          <ActivityIndicator size="small" />
+        </View>
+      );
+    } else if (!hasMore && !loading) {
+      // Show "Jump to Top" button when all data has been loaded
+      return (
+        <View style={styles.footerContainer}>
+          <TouchableOpacity style={styles.jumpToTopButton} onPress={scrollToTop}>
+            <CustomText style={styles.jumpToTopText}>Jump to Top</CustomText>
+          </TouchableOpacity>
+        </View>
+      );
+    } else {
+      // No footer component while loading is false and hasMore is true
+      return null;
+    }
+  };
+
   const loadMore = () => {
     if (hasMore && !loading) {
-      setPage(prevPage => prevPage + 1); // Load next page
+      setPage((prevPage) => prevPage + 1); // Load next page
     }
   };
 
@@ -396,14 +435,21 @@ const HistoryScreen = () => {
   return (
     <LinearGradient colors={['#2F5651', '#478B4E']} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <CustomText style={styles.headerTitle}>History</CustomText>
+        </View>
         <FlatList
+          ref={flatListRef}
           data={historyItems}
           renderItem={renderHistoryItem}
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={styles.listContainer}
           onEndReached={loadMore} // Load more when reaching the bottom
           onEndReachedThreshold={0.5} // Adjust the threshold as needed
-          ListFooterComponent={loading && hasMore ? <ActivityIndicator size="small" /> : null}
+          ListFooterComponent={renderFooter}
         />
       </SafeAreaView>
     </LinearGradient>
@@ -413,7 +459,24 @@ const HistoryScreen = () => {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  listContainer: { padding: 16 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 16,
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  listContainer: { paddingHorizontal: 16 },
   historyCard: {
     flexDirection: 'row',
     backgroundColor: '#FFF',
@@ -428,6 +491,21 @@ const styles = StyleSheet.create({
   qualityText: { fontSize: 14, fontWeight: '600' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
+  footerContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  jumpToTopButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  jumpToTopText: {
+    color: '#478B4E',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default HistoryScreen;
