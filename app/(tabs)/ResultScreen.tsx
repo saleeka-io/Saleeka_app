@@ -49,7 +49,7 @@ const getAnimationForRating = (rating: string) => {
 };
 
 const ResultScreen = () => {
-  const { productData } = useLocalSearchParams();
+  const { productData, fromHistory } = useLocalSearchParams();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -64,8 +64,16 @@ const ResultScreen = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const cameFromHistory = fromHistory === 'true';
+
   const navigateBack = () => {
-    router.push('/scan');
+    if (cameFromHistory) {
+      // Navigate back to HistoryScreen if the user came from there
+      router.replace('/HistoryScreen');
+    } else {
+      // Default back navigation (e.g., back to scan screen or previous route)
+      router.push('/scan');
+    }
   };
 
   useEffect(() => {

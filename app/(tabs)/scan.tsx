@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Animated, Modal, TextInput, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
@@ -509,14 +509,15 @@ const fetchProductData = async (barcode: string): Promise<ProductData | null> =>
 
   const renderOverlay = () => (
     isOverlayVisible && (
-      <Animated.View 
-        style={[
-          styles.overlayContainer, 
-          {
-            opacity: overlayAnimation,
-          }
-        ]}
-      >
+      <TouchableWithoutFeedback onPress={() => {}}>
+        <Animated.View 
+          style={[
+            styles.overlayContainer, 
+            {
+              opacity: overlayAnimation,
+            }
+          ]}
+        >
         <View style={styles.blurOverlay} />
         <Animated.View 
           style={[
@@ -559,64 +560,65 @@ const fetchProductData = async (barcode: string): Promise<ProductData | null> =>
           </LinearGradient>
         </Animated.View>
       </Animated.View>
+      </TouchableWithoutFeedback>
     )
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Camera View */}
       <CameraView
         ref={cameraRef}
         style={styles.camera}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: [
-            'ean13', 'ean8', 'upc_a', 'upc_e'
-          ],
+          barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'],
         }}
+        pointerEvents="auto" // Set to 'auto' or remove this line
         // flashMode={isFlashOn ? FlashMode.torch : FlashMode.off}
       >
         <View style={styles.overlay}>
-          <TouchableOpacity 
-            style={styles.manualInputButton} 
-            onPress={() => {
-              console.log('Manual input button pressed');
-              showOverlay();
-            }}
-          >
-            <Ionicons name="barcode-outline" size={24} color="white" />
-          </TouchableOpacity>
-
+          {/* Removed the manual input button from here */}
+  
           <Text style={styles.searchingText}>SEARCHING FOR BARCODE{ellipsis}</Text>
           <View style={styles.scanArea}>
             <Animated.View style={[styles.barcodeOutline, { opacity: fadeAnim }]}>
               {renderBarcodeLines()}
             </Animated.View>
           </View>
-          {/* <TouchableOpacity 
-            style={styles.flashButton} 
-            onPress={() => {
-              console.log('Flash button pressed');
-              toggleFlash();
-            }}
-          >
-            <Ionicons name={getFlashIcon()} size={24} color="white" />
-          </TouchableOpacity> */}
+          {/* Other components inside CameraView, if any */}
         </View>
       </CameraView>
+  
+      {/* Manual Input Button moved outside of CameraView */}
+      <TouchableOpacity
+        style={styles.manualInputButton}
+        onPress={() => {
+          console.log('Manual input button pressed');
+          showOverlay();
+        }}
+      >
+        <Ionicons name="barcode-outline" size={24} color="white" />
+      </TouchableOpacity>
+  
+      {/* Loading Indicator */}
       {isLoading && (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color="#ffffff" />
-  </View>
-)}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffffff" />
+        </View>
+      )}
+  
+      {/* Overlay Modal */}
       {renderOverlay()}
     </SafeAreaView>
   );
-};
+};  
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+    position: 'relative'
   },
   camera: {
     flex: 1,
@@ -632,6 +634,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1000,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -700,7 +703,7 @@ const styles = StyleSheet.create({
   },
   manualInputButton: {
     position: 'absolute',
-    top: 25,
+    top: 80,
     left: 20,
     padding: 25,
     zIndex: 1000,

@@ -359,16 +359,32 @@ const HistoryScreen = () => {
     const encodedProductData = Buffer.from(JSON.stringify(productData)).toString('base64');
     router.push({
       pathname: '/ResultScreen',
-      params: { productData: encodedProductData },
+      params: { productData: encodedProductData, fromHistory: 'true' }, // Convert boolean to string
     });
   };
+  
 
   const renderHistoryItem = ({ item }: { item: ProductData }) => {
     const { product_name, image_url, ingredients } = item;
     const rating = RatingService.calculateRating(item.ingredients || []);
+    
+    function setImageError(arg0: boolean): void {
+      throw new Error('Function not implemented.');
+    }
+
     return (
       <TouchableOpacity style={styles.historyCard} onPress={() => navigateToResult(item)}>
-        <Image source={{ uri: image_url || undefined }} style={styles.productImage} />
+        {image_url ? (
+          <Image
+            source={{ uri: image_url }}
+            style={styles.productImage}
+            onError={() => setImageError(true)}  // Optionally handle image load errors
+          />
+        ) : (
+          <View style={styles.imageFallbackContainer}>
+            <Ionicons name="image-outline" size={50} color="#D32F2F" />
+          </View>
+        )}
         <View style={styles.cardContent}>
           <CustomText fontWeight="medium" style={styles.productName}>{product_name}</CustomText>
           <CustomText style={[styles.qualityText, { color: rating.color }]}>
@@ -378,6 +394,7 @@ const HistoryScreen = () => {
       </TouchableOpacity>
     );
   };
+  
 
   if (loading && historyItems.length === 0) {
     return (
@@ -436,9 +453,9 @@ const HistoryScreen = () => {
     <LinearGradient colors={['#2F5651', '#478B4E']} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.replace('/scan')} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
           <CustomText style={styles.headerTitle}>History</CustomText>
         </View>
         <FlatList
@@ -506,6 +523,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  imageFallbackContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    borderRadius: 40,
+    marginRight: 12,
+  },
+  
 });
 
 export default HistoryScreen;
