@@ -288,6 +288,8 @@ const HistoryScreen = () => {
     fetchHistory();
   }, [user, page]);
 
+  
+
   const fetchProductData = async (barcode: string): Promise<ProductData | null> => {
     console.log(`Checking cache for barcode: ${barcode}`);
 

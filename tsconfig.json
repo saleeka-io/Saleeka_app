@@ -6,11 +6,14 @@
     "paths": {
       "@/*": ["./*"]
     },
+ 
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true  // Consider this to skip type checking of all declaration files (*.d.ts).
   },
+  "typeRoots": ["./types"],
   "include": [
+    "types/env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
