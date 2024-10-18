@@ -1,4 +1,4 @@
-package com.Saleeka.testapp
+package com.saleeka.testapp
 
 import android.os.Build
 import android.os.Bundle

@@ -19,6 +19,26 @@
         "severity": "red"
       },
       {
+        "name": "Rapeseed Oil",
+        "casNumber": "8002-13-9",
+        "reason": "Linked to potential heart health concerns if hydrogenated",
+        "severity": "yellow"
+      },
+      {
+        "name": "Vegetable Fat",
+        "casNumber": "N/A",
+        "reason": "Often hydrogenated, may contain trans fats",
+        "severity": "yellow"
+      },
+      {
+        "name": "Vegetable Shortening",
+        "casNumber": "N/A",
+        "reason": "Contains trans fats, linked to heart disease",
+        "severity": "red"
+      },
+
+
+      {
         "name": "Triclosan",
         "casNumber": "3380-34-5",
         "reason": "Classified as a skin irritant and potential endocrine disruptor",

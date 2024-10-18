@@ -1,4 +1,4 @@
-package com.Saleeka.testapp
+package com.saleeka.testapp
 
 import android.app.Application
 import android.content.res.Configuration
